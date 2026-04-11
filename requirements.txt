@@ -1,0 +1,7 @@
+selenium>=4.42.0
+pyyaml>=6.0
+pandas>=2.0
+pyarrow>=14.0
+beautifulsoup4>=4.12
+requests>=2.32
+python-dotenv>=1.0

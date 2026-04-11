@@ -1,0 +1,734 @@
+[
+  {
+    "no": 1,
+    "name_ja": "ルート要素",
+    "name_en": "corporations",
+    "format": null,
+    "digits": null,
+    "available": {
+      "download": false,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "ルート要素は、XML文書に必要な要素で、XML文書のデータ階層構造の最上位に位置する要素。\nこのルート要素は、CSV形式で取得する場合は設定されない（XMLのみ）。"
+  },
+  {
+    "no": 2,
+    "name_ja": "最終更新 年月日",
+    "name_en": "lastUpdateDate",
+    "format": "YYYY‐MM‐DD",
+    "digits": "10",
+    "available": {
+      "download": false,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "Web-APIで情報を取得した際に、ヘッダー情報として、出力される情報（Web-APIの検索条件で参照する項目ではない。）。\nこの最終更新年月日は、公表用のデータベースを最後に更新した日付を表す。\nデータベースの更新処理は、当日の11時及び16時の２回実施する（処理状況によっては遅れる場合がある。）。\nデータベース更新処理実施後から午前０時の日付切替処理までの時間帯においては、国税庁法人番号公表サイトでの検索、ダウンロード及びWeb-APIの法人番号・法人名を指定して情報を取得する機能により、更新情報を取得することができる。\nなお、当日分の全ての更新情報についてWeb-APIを利用して取得したい場合は、取得期間を指定して情報を取得する機能により、午前０時の日付切換処理後に前日の日付をセットして取得することができる。"
+  },
+  {
+    "no": 3,
+    "name_ja": "総件数",
+    "name_en": "count",
+    "format": "ZZZZZZZ9",
+    "digits": "１～8",
+    "available": {
+      "download": false,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "Web-APIで情報を取得した際にヘッダー情報として出力される情報。\n総件数は、Web-APIで指定した条件に合致したデータの総件数を表す。"
+  },
+  {
+    "no": 4,
+    "name_ja": "分割番号",
+    "name_en": "divideNumber",
+    "format": "ZZZZ9",
+    "digits": "1～5",
+    "available": {
+      "download": false,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "Web-APIの取得期間や法人名を指定して情報を取得する場合の一度に取得することができるデータ件数を2,000件に制限するため、条件に合致するデータを取得する際にファイルが分割されることがある。\n分割番号は、その際の分割数の分子を表すデータ項目。\n次項の分割数と当該データ項目（分割番号）が一致するまでWeb-APIリクエスト条件の分割番号をカウントアップしてリクエストを送信することにより、条件に合致する情報を全て取得することができる。"
+  },
+  {
+    "no": 5,
+    "name_ja": "分割数",
+    "name_en": "divideSize",
+    "format": "ZZZZ9",
+    "digits": "1～5",
+    "available": {
+      "download": false,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "Web-APIで情報を取得した際にヘッダー情報として出力される情報。\n分割数は、分割番号の分母を表すデータ項目。\n条件に合致する情報（ファイル）の取得において分割されない場合、値が「1」となる。"
+  },
+  {
+    "no": 6,
+    "name_ja": "法人等要素",
+    "name_en": "corporation",
+    "format": null,
+    "digits": null,
+    "available": {
+      "download": false,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "法人等要素は、XML文書のデータ階層構造上、項番7「一連番号」から項番36「検索対象除外」までの上位に位置する親要素。　\n法人等要素は、CSV形式で取得する場合は設定されない（XMLのみ）。"
+  },
+  {
+    "no": 7,
+    "name_ja": "一連番号",
+    "name_en": "sequenceNumber",
+    "format": "ZZZZZZZ9",
+    "digits": "1～8",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "全件データ（月末時点の最新情報）やWeb-APIによる法人番号を指定した最新情報の取得以外の場合（例えば、ある法人の情報を履歴情報を含めて取得する場合や、日次の更新情報を取得する場合。）には、同一法人に関する情報が複数存在することがある。\nその際に、法人（法人番号）単位に時系列の更新処理等を行う場合、一連番号が小さい値の情報から順番に処理することにより、時系列に順序性を保って更新処理を行うことを可能とするための項目。\nなお、ダウンロードでは、１ファイルのファイルサイズが過度に大きくなる場合にファイルが分割して提供され、Web-APIではデータ件数が2,000件を超過した場合にデータが分割して提供されるが、いずれの場合も、一連番号は、データ全体を通じて付される。"
+  },
+  {
+    "no": 8,
+    "name_ja": "法人番号",
+    "name_en": "corporateNumber",
+    "format": "9999999999999",
+    "digits": "13",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "法人番号の指定を受けた者（以下「法人番号保有者」という。）の法人番号を示すデータ項目。"
+  },
+  {
+    "no": 9,
+    "name_ja": "処理区分",
+    "name_en": "process",
+    "format": "99",
+    "digits": "2",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [
+      {
+        "code": "01",
+        "name": "新規",
+        "description": "値「01」は、新たに法人番号が指定されたことを表す情報であることを意味する。"
+      },
+      {
+        "code": "11",
+        "name": "商号又は 名称の変更",
+        "description": "値「11」は、商号又は名称が変更されたことを表す情報であることを意味する。"
+      },
+      {
+        "code": "12",
+        "name": "国内所在地 の変更",
+        "description": "値「12」は、国内における本店又は主たる事務所の所在地の変更、国内に本店又は主たる事務所がない法人等の場合は、国内における事務所又は営業所の所在地の変更又は、市区町村合併等により住居表示が変更されたことを表す情報であることを意味する。"
+      },
+      {
+        "code": "13",
+        "name": "国外所在地 の変更",
+        "description": "値「13」は、国外における本店又は主たる事務所の所在地が変更されたことを表す情報であることを意味する。"
+      },
+      {
+        "code": "21",
+        "name": "登記記録 の閉鎖等",
+        "description": "値「21」は、清算の結了、合併による解散などの事由により登記記録の閉鎖等の事由が生じたことを表す情報であることを意味する。"
+      },
+      {
+        "code": "22",
+        "name": "登記記録 の復活等",
+        "description": "値「22」は、清算の結了、合併による解散などの事由により登記記録の閉鎖等が生じた後、清算結了等の手続に瑕疵があり、清算結了が無効になるなどの事由により登記記録が復活等したことを表す情報であることを意味する。"
+      },
+      {
+        "code": "71",
+        "name": "吸収合併",
+        "description": "値「71」は、設立登記法人が、吸収合併を行ったことを表す情報であることを意味する。"
+      },
+      {
+        "code": "72",
+        "name": "吸収合併無効",
+        "description": "値「72」は、吸収合併後存続した設立登記法人の吸収合併について無効判決が確定したことを表す情報であることを意味する。"
+      },
+      {
+        "code": "81",
+        "name": "商号の登記 の抹消",
+        "description": "値「81」は、設立登記法人について商号の登記が抹消されたことを表す情報であることを意味する。"
+      },
+      {
+        "code": "99",
+        "name": "削除",
+        "description": "値「99」は、法人番号の重複指定等の理由により法人番号の指定を撤回したこと及び公表に同意した人格のない社団等の代表者又は管理人が、公表の同意を撤回したことを表す情報であることを意味する。\n値「99」が設定された場合は、「一連番号」、「法人番号」及び「更新年月日」を除く全ての項目値はブランクとなる。"
+      }
+    ],
+    "description": "法人番号の指定、商号又は所在地に変更等が発生した事由をコード値で表す項目。\n※英語表記及びフリガナの登録並びに検索対象除外の情報の更新に係る処理区分はありません（これらの項目は、提供済みのデータに英語表記若しくはフリガナの登録又は検索対象除外の情報を追加した上で、訂正データとして提供するため）。"
+  },
+  {
+    "no": 10,
+    "name_ja": "訂正区分",
+    "name_en": "correct",
+    "format": "9",
+    "digits": "1",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [
+      {
+        "code": "0",
+        "name": "訂正以外",
+        "description": "訂正したデータ（訂正区分が「1」）以外の場合、当該訂正区分に訂正以外「0」を設定する。"
+      },
+      {
+        "code": "1",
+        "name": "訂正",
+        "description": "訂正したデータの場合、当該訂正区分に訂正「1」を設定する。"
+      }
+    ],
+    "description": "提供していたデータについて、次の場合に値を設定するデータ項目。\n①　履歴データ（過去分含む。）の内容に誤りがあり、訂正が生じた場合\n②　履歴データの追加が生じた場合\n③　履歴データの削除が生じた場合\n④　英語表記の登録情報を提供する場合\n⑤　フリガナの登録情報を提供する場合\n⑥　検索対象除外の情報を提供する場合\n\n処理区分が「99：削除」の場合は、訂正区分はブランクとなる。\n内容に誤りがあった場合は、当該データ項目を活用し、誤った内容のデータを削除して、訂正データを取り込むことにより、保有データを訂正することができる。\nなお、訂正処理があった場合は、訂正した法人番号保有者に係る全ての履歴データを提供している。"
+  },
+  {
+    "no": 11,
+    "name_ja": "更新年月日",
+    "name_en": "updateDate",
+    "format": "YYYY‐MM‐DD",
+    "digits": "10",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "法務省等からデータを受け取り、当庁でデータを更新した日付を表す。"
+  },
+  {
+    "no": 12,
+    "name_ja": "変更年月日",
+    "name_en": "changeDate",
+    "format": "YYYY‐MM‐DD",
+    "digits": "10",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "事由が発生した日付を表すデータ項目。\n○処理区分が新規（01）の場合\n法人番号が指定された年月日を意味する。\n\n○処理区分が新規（01）以外の場合\n・設立登記法人：処理区分の事由に係る登記年月日を意味する。\n・設立登記法人以外：処理区分の事由が生じた年月日を意味する。"
+  },
+  {
+    "no": 13,
+    "name_ja": "商号又は名称",
+    "name_en": "name",
+    "format": "全角文字",
+    "digits": "150 (最大)",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "法人番号保有者の商号又は名称を示すデータ項目。\n商号又は名称の文字数が、150文字を超過した場合、151文字目以降の文字は格納されないため、151文字目以降の情報は、イメージファイルを閲覧することにより確認することができる。"
+  },
+  {
+    "no": 14,
+    "name_ja": "商号又は 名称イメージID",
+    "name_en": "nameImageId",
+    "format": "99999999",
+    "digits": "8",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "商号又は名称イメージIDは、イメージファイルを閲覧するために指定する値（情報）。\n当該データ項目は、商号又は名称にJIS第１・第２水準以外の文字を使用している場合及び商号又は名称の文字数が150文字を超過した場合に値を設定する項目。\nなお、当該イメージIDの値を設定したURL※でアクセスすることにより、国税庁法人番号公表サイトの検索画面で確認できるイメージファイルと同様のイメージファイルを直接閲覧することができる。\n※（https://www.houjin-bangou.nta.go.jp/image?imageid=イメージID）\n各システムの画面にイメージファイルを表示したいなどの要件がある場合に活用することができる。"
+  },
+  {
+    "no": 15,
+    "name_ja": "法人種別",
+    "name_en": "kind",
+    "format": "999",
+    "digits": "3",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [
+      {
+        "code": "101",
+        "name": "国の機関",
+        "description": "値「101」は、行政機関、裁判所及び国会の機関に係る情報であることを意味する。"
+      },
+      {
+        "code": "201",
+        "name": "地方公共 団体",
+        "description": "値「201」は、地方自治法第１条の３において定義されている普通地方公共団体及び特別地方公共団体に係る情報であることを意味する。"
+      },
+      {
+        "code": "301",
+        "name": "株式会社",
+        "description": "値「301」は、株式会社の情報であることを意味する。"
+      },
+      {
+        "code": "302",
+        "name": "有限会社",
+        "description": "値「302」は、特例有限会社の情報であることを意味する。"
+      },
+      {
+        "code": "303",
+        "name": "合名会社",
+        "description": "値「303」は、合名会社の情報であることを意味する。"
+      },
+      {
+        "code": "304",
+        "name": "合資会社",
+        "description": "値「304」は、合資会社の情報であることを意味する。"
+      },
+      {
+        "code": "305",
+        "name": "合同会社",
+        "description": "値「305」は、合同会社の情報であることを意味する。"
+      },
+      {
+        "code": "399",
+        "name": "その他の 設立登記法人",
+        "description": "値「399」は、株式会社（301）、有限会社（302）、合名会社（303）、合資会社（304）及び合同会社（305）以外の法令の規定により設立の登記をすることによって成立する法人の情報であることを意味する。"
+      },
+      {
+        "code": "401",
+        "name": "外国会社等",
+        "description": "値「401」は、外国、外国の行政区画及び外国会社並びに法律又は条約の規定により認許された外国法人の情報であることを意味する。"
+      },
+      {
+        "code": "499",
+        "name": "その他",
+        "description": "上記以外の人格のない社団等及び日本の法律の規定により成立し、設立の登記を行わない法人の情報であることを意味する。"
+      }
+    ],
+    "description": "法人種別を判別するためのデータ項目。\n例えば、データの取込み処理を行う場合などにおいて、処理対象として必要としない法人（組織区分）のデータを、法人種別のコード値を利用して除外設定を行うなどの活用が考えられるために提供する項目。\nコード化した法人種別は、以下のとおり。"
+  },
+  {
+    "no": 16,
+    "name_ja": "国内所在地 （都道府県）",
+    "name_en": "prefectureName",
+    "format": "全角文字",
+    "digits": "10 (最大)",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "法人番号保有者の本店又は主たる事務所の所在地の都道府県名。\n国内所在地の項目（「都道府県」、「市区町村」、「丁目番地等」）について、１項目にまとめた場合、利用者側で「都道府県」、「市区町村」及び「丁目番地等」をそれぞれ別の項目に分割する手間が掛かることから、国内所在地の項目を分割している。\nなお、本店又は主たる事務所の所在地が国外にある法人番号保有者は、国内の事務所又は営業所の所在地の都道府県名。"
+  },
+  {
+    "no": 17,
+    "name_ja": "国内所在地 （市区町村）",
+    "name_en": "cityName",
+    "format": "全角文字",
+    "digits": "20 (最大)",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "法人番号保有者の本店又は主たる事務所の所在地の市区町村名。\nなお、本店又は主たる事務所の所在地が国外にある法人番号保有者は、国内の事務所又は営業所の所在地の市区町村名。"
+  },
+  {
+    "no": 18,
+    "name_ja": "国内所在地 （丁目番地等）",
+    "name_en": "streetNumber",
+    "format": "全角文字",
+    "digits": "300 (最大)",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "法人番号保有者の本店又は主たる事務所の所在地の丁目番地等。\n国内所在地の文字数が、都道府県、市区町村、丁目番地等を合わせて、300文字を超過した場合、301文字目以降の文字は格納されないため、301文字目以降の情報は、イメージファイルを閲覧することにより確認することができる。\nなお、本店又は主たる事務所の所在地が国外にある法人番号保有者は、国内の事務所又は営業所の所在地の丁目番地等。"
+  },
+  {
+    "no": 19,
+    "name_ja": "国内所在地 イメージID",
+    "name_en": "addressImageId",
+    "format": "99999999",
+    "digits": "8",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "国内所在地イメージIDは、イメージファイルを閲覧するために指定する値（情報）。\n当該データ項目は、国内所在地にJIS第１・第２水準以外の文字を使用している場合及び国内所在地の文字数が300文字を超過した場合に値を設定する項目。\nなお、当該イメージIDの値を設定したURL※でアクセスすることにより、国税庁法人番号公表サイトの検索画面で確認できるイメージファイルと同様のイメージファイルを直接閲覧することができる。\n※（https://www.houjin-bangou.nta.go.jp/image?imageid=イメージID）\n各システムの画面にイメージファイルを表示したいなどの要件がある場合に活用することができる。"
+  },
+  {
+    "no": 20,
+    "name_ja": "都道府県コード",
+    "name_en": "prefectureCode",
+    "format": "99",
+    "digits": "2",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "データを取り込み、名寄せ作業や不要なデータを識別する際、当該コードを活用することにより、効率的な作業を行うことができる。\n都道府県コード及び市区町村コードの詳細については、以下のURL※（日本産業標準調査会/データベース検索）を参照のこと。\n※（https://www.jisc.go.jp/）"
+  },
+  {
+    "no": 21,
+    "name_ja": "市区町村コード",
+    "name_en": "cityCode",
+    "format": "999",
+    "digits": "3",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": null
+  },
+  {
+    "no": 22,
+    "name_ja": "郵便番号",
+    "name_en": "postCode",
+    "format": "9999999",
+    "digits": "7",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "国内所在地の文字情報を基に設定した郵便番号。\n全国町・字ファイルを基に設定しているため、所在地に外字が含まれる場合や、誤字脱字がある場合には、正確な郵便番号が設定されていない場合がある。\nなお、同一の字・大字内の特定の地番に付される郵便番号や、ビルや大口事業所に係る個別郵便番号には対応していない。"
+  },
+  {
+    "no": 23,
+    "name_ja": "国外所在地",
+    "name_en": "addressOutside",
+    "format": "全角文字",
+    "digits": "300 (最大)",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "本店又は主たる事務所の所在地が国外にある法人番号保有者の国外における本店又は主たる事務所の所在地を示すデータ項目。\nなお、国外所在地の文字数が300文字を超過した場合、301文字目以降の文字が格納されないため、301文字目以降の情報は、イメージファイルを閲覧することにより確認することができる。"
+  },
+  {
+    "no": 24,
+    "name_ja": "国外所在地 イメージID",
+    "name_en": "addressOutside ImageId",
+    "format": "99999999",
+    "digits": "8",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "国外所在地イメージIDは、イメージファイルを閲覧するために指定する値（情報）。\n当該データ項目は、国外所在地にJIS第１・第２水準以外の文字を使用している場合及び国外所在地の文字数が300文字を超過した場合に値を設定する項目。\nなお、当該イメージIDの値を設定したURL※でアクセスすることにより、国税庁法人番号公表サイトの検索画面で確認できるイメージファイルと同様のイメージファイルを直接閲覧することができる。\n※（https://www.houjin-bangou.nta.go.jp/image?imageid=イメージID）\n各システムの画面にイメージファイルを表示したいなどの要件がある場合に活用することができる。"
+  },
+  {
+    "no": 25,
+    "name_ja": "登記記録の 閉鎖等年月日",
+    "name_en": "closeDate",
+    "format": "YYYY‐MM‐DD",
+    "digits": "10",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "登記記録の閉鎖等の事由が生じた年月日を表す。"
+  },
+  {
+    "no": 26,
+    "name_ja": "登記記録の閉鎖等の事由",
+    "name_en": "closeCause",
+    "format": "99",
+    "digits": "2",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [
+      {
+        "code": "01",
+        "name": "清算の結了等",
+        "description": "設立登記法人について、清算の結了等により登記記録が閉鎖された事を意味する。"
+      },
+      {
+        "code": "11",
+        "name": "合併による解散等",
+        "description": "設立登記法人について、合併による解散等により登記記録が閉鎖された事を意味する。"
+      },
+      {
+        "code": "21",
+        "name": "登記官による閉鎖",
+        "description": "設立登記法人について、商業登記規則第81条により登記記録の閉鎖された事を意味する。"
+      },
+      {
+        "code": "31",
+        "name": "その他の清算の結了等",
+        "description": "設立登記法人以外について、清算の結了等に類する事由が生じた場合に表示する。"
+      }
+    ],
+    "description": "閉鎖の事由は、登記記録の閉鎖等が生じた事由を表すデータ項目。"
+  },
+  {
+    "no": 27,
+    "name_ja": "承継先 法人番号",
+    "name_en": "successor CorporateNumber",
+    "format": "9999999999999",
+    "digits": "13",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "合併等による事業承継があったことにより登記記録が閉鎖された場合の存続する法人の法人番号。"
+  },
+  {
+    "no": 28,
+    "name_ja": "変更事由の詳細",
+    "name_en": "changeCause",
+    "format": "全角半角混在",
+    "digits": "500 (最大)",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "合併等による事業承継があった場合の事業承継内容を示すデータ項目。"
+  },
+  {
+    "no": 29,
+    "name_ja": "法人番号指定年月日",
+    "name_en": "assignmentDate",
+    "format": "YYYY‐MM‐DD",
+    "digits": "10",
+    "available": {
+      "download": true,
+      "webapi_ver1": true,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "法人番号指定年月日は、法人番号が指定された年月日を表す。"
+  },
+  {
+    "no": 30,
+    "name_ja": "最新履歴",
+    "name_en": "latest",
+    "format": "9",
+    "digits": "1",
+    "available": {
+      "download": true,
+      "webapi_ver1": false,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [
+      {
+        "code": "0",
+        "name": "過去情報",
+        "description": "値「0」は、過去の情報であることを意味する。"
+      },
+      {
+        "code": "1",
+        "name": "最新情報",
+        "description": "値「1」は、最新の情報であることを意味する。"
+      }
+    ],
+    "description": "応答結果のデータが、最新の情報か過去の情報かを表す。\nなお、全件ダウンロードデータについては、月末時点の最新情報を提供することから、値は全て「1」となる。"
+  },
+  {
+    "no": 31,
+    "name_ja": "商号又は名称（英語表記）",
+    "name_en": "enName",
+    "format": "半角英数記号",
+    "digits": "300 (最大)",
+    "available": {
+      "download": true,
+      "webapi_ver1": false,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "法人番号保有者が登録した商号又は名称（英語表記）。\nなお、商号又は名称（英語表記）の文字数の上限は300文字である。\n英語表記の登録がない場合はブランクとなる。"
+  },
+  {
+    "no": 32,
+    "name_ja": "国内所在地（都道府県）(英語表記）",
+    "name_en": "enPrefectureName",
+    "format": "半角英字",
+    "digits": "9 （最大）",
+    "available": {
+      "download": true,
+      "webapi_ver1": false,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "法人番号保有者が登録した本店又は主たる事務所の所在地の都道府県名（英語表記）。\nなお、本店又は主たる事務所の所在地が国外にある法人番号保有者は、国内の事務所又は営業所の所在地の都道府県名（英語表記）。\n英語表記の登録がない場合はブランクとなる。"
+  },
+  {
+    "no": 33,
+    "name_ja": "国内所在地 （市区町村丁目番地等）（英語表記）",
+    "name_en": "enCityName",
+    "format": "半角英数記号",
+    "digits": "600 （最大）",
+    "available": {
+      "download": true,
+      "webapi_ver1": false,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "法人番号保有者が登録した本店又は主たる事務所の所在地の丁目番地等（英語表記）。\n国内所在地（市区町村丁目番地等）（英語表記）の文字数の上限は600文字である。\nなお、法人番号保有者が登録した表記を設定しており、市区町村名等の標準化（例えば「XXX-ku」を「XXX ku」へ表現を標準化するなど）の処理は行っていない。\n英語表記の登録がない場合はブランクとなる。"
+  },
+  {
+    "no": 34,
+    "name_ja": "国外所在地（英語表記）",
+    "name_en": "enAddressOutside",
+    "format": "半角英数記号",
+    "digits": "600 （最大）",
+    "available": {
+      "download": true,
+      "webapi_ver1": false,
+      "webapi_ver2": true,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "本店又は主たる事務所の所在地が国外にある法人番号保有者が登録した国外における本店又は主たる事務所の所在地（英語表記）。\n国外所在地（英語表記）の文字数の上限は600文字であり、600文字を超過した場合、601文字目以降の文字は格納されない。\nまた、格納されている国外所在地（国名等）（英語表記）は、法人番号保有者が登録した表記であり、所在地の表記の統一は行っていない。\n英語表記の登録がない場合はブランクとなる。"
+  },
+  {
+    "no": 35,
+    "name_ja": "フリガナ",
+    "name_en": "furigana",
+    "format": "全角文字",
+    "digits": "500 （最大）",
+    "available": {
+      "download": true,
+      "webapi_ver1": false,
+      "webapi_ver2": false,
+      "webapi_ver3": true,
+      "webapi_ver4": true
+    },
+    "code_values": [],
+    "description": "法人番号保有者の商号又は名称に対するフリガナ情報を示すデータ項目。\nフリガナ情報に使用している文字は全角カタカナ及び長音（ー）のみである。\nフリガナの登録がない場合はブランクとなる。"
+  },
+  {
+    "no": 36,
+    "name_ja": "検索対象除外",
+    "name_en": "hihyoji",
+    "format": "9",
+    "digits": "1",
+    "available": {
+      "download": true,
+      "webapi_ver1": false,
+      "webapi_ver2": false,
+      "webapi_ver3": false,
+      "webapi_ver4": true
+    },
+    "code_values": [
+      {
+        "code": "0",
+        "name": "検索対象",
+        "description": "値「0」は、検索対象となっている情報であることを意味する。"
+      },
+      {
+        "code": "1",
+        "name": "検索対象除外",
+        "description": "値「1」は、検索対象から除外した情報であることを意味する。"
+      }
+    ],
+    "description": "設立登記法人のうち、登記上の所在地が、住居表示の実施や区画整理等で既に廃止されており、現在では存在しない住所表記となっていることが確認できた法人について、検索対象から除外していることを示すデータ項目。\nなお、この情報は法人単位で設定しており、データ提供時点の情報を表している。"
+  }
+]

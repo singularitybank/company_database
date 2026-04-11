@@ -1,0 +1,29 @@
+# ============================================================
+# 企業情報データベース 設定ファイル
+# ============================================================
+
+# ------------------------------------------------------------
+# ハローワーク
+# ------------------------------------------------------------
+hellowork:
+  # 生HTML保存先（Cドライブ一時置き。定期的に外付けHDDへ手動移動）
+  html_dir: "C:/Temp/html"
+
+  # Parquet保存先（プロジェクトルートからの相対パス）
+  staging_dir: "data/staging"
+
+  # 求人番号収集時の一時CSV置き場
+  temp_dir: "C:/Temp"
+
+  # 求人番号CSV最終保存先（OneDrive）
+  output_dir: "C:/Users/singu/OneDrive - Singularity Bank/Development/Data/hellowork"
+
+  # アクセス間隔（秒）。実際にはこの値 + random.uniform(0, 1) 秒待機する
+  wait_between_pages: 2.0
+  wait_between_details: 1.0
+
+  # Selenium タイムアウト（秒）
+  timeout: 15
+
+  # ブラウザをヘッドレスモードで起動するか
+  headless: false

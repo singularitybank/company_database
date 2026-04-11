@@ -1,0 +1,9 @@
+.claude
+.vscode
+data/**/*.csv
+data/**/*.parquet
+data/**/*.db
+*.xlsx
+__pycache__/
+*.log
+.env
