@@ -21,7 +21,6 @@
 """
 
 import logging
-import os
 import sys
 import time
 import xml.etree.ElementTree as ET
@@ -29,9 +28,9 @@ from datetime import date, timedelta
 from pathlib import Path
 
 import requests
-from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from src.config import get_nta_app_id
 from src.models.schema import COLUMN_MAP
 
 # ---------------------------------------------------------------------------
@@ -40,6 +39,7 @@ from src.models.schema import COLUMN_MAP
 
 API_BASE_URL = "https://api.houjin-bangou.nta.go.jp/4/diff"
 MAX_RECORDS_PER_PAGE = 2000
+API_TIMEOUT = 30  # HTTP タイムアウト（秒）
 
 # 都道府県コード (01〜47 + 99:海外)
 ALL_ADDRESS_CODES = [f"{i:02d}" for i in range(1, 48)] + ["99"]
@@ -53,16 +53,6 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # 内部ユーティリティ
 # ---------------------------------------------------------------------------
-
-def _get_app_id() -> str:
-    load_dotenv(Path(__file__).resolve().parents[2] / "config" / ".env")
-    app_id = os.getenv("NTA_APPLICATION_ID")
-    if not app_id:
-        raise EnvironmentError(
-            "環境変数 NTA_APPLICATION_ID が設定されていません。config/.env を確認してください。"
-        )
-    return app_id
-
 
 def _fetch_page(
     app_id: str,
@@ -99,7 +89,7 @@ def _fetch_page(
     last_exc = None
     for attempt in range(retry):
         try:
-            resp = requests.get(API_BASE_URL, params=params, timeout=30)
+            resp = requests.get(API_BASE_URL, params=params, timeout=API_TIMEOUT)
             resp.raise_for_status()
             root = ET.fromstring(resp.content)
             return root
@@ -145,22 +135,21 @@ def _parse_corporations(root: ET.Element) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 def fetch_diff(
-    from_date: str | date,
-    to_date: str | date,
-    address_codes: list[str] | None = None,
+    from_date: "str | date",
+    to_date: "str | date",
+    address_codes: "list[str] | None" = None,
     wait_between_requests: float = 1.0,
 ) -> list[dict]:
     """差分APIから指定期間の変更法人を取得する。
 
     1アドレスあたりの件数が 2,000 件を超える場合は自動でページネーションを行う。
-    件数が 2,000 件を超えない場合、全国取得（address 省略）は実行しない。
     都道府県コード別に分割してリクエストする。
 
     Args:
-        from_date:               取得開始日
-        to_date:                 取得終了日
-        address_codes:           都道府県コードのリスト。None の場合は全都道府県+海外
-        wait_between_requests:   リクエスト間の待機秒数（サーバー負荷軽減）
+        from_date:             取得開始日
+        to_date:               取得終了日
+        address_codes:         都道府県コードのリスト。None の場合は全都道府県+海外
+        wait_between_requests: リクエスト間の待機秒数（サーバー負荷軽減）
 
     Returns:
         法人情報の辞書リスト（correct=0 & latest=1 のみ）
@@ -170,7 +159,7 @@ def fetch_diff(
     if isinstance(to_date, date):
         to_date = to_date.strftime("%Y-%m-%d")
 
-    app_id = _get_app_id()
+    app_id = get_nta_app_id()
     targets = address_codes if address_codes is not None else ALL_ADDRESS_CODES
     all_records: list[dict] = []
 
@@ -235,12 +224,8 @@ def _dedup_by_corporate_number(records: list[dict]) -> list[dict]:
 
 if __name__ == "__main__":
     import argparse
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
+    from src.logging_setup import setup_logging
+    setup_logging()
 
     parser = argparse.ArgumentParser(description="国税庁 差分APIフェッチ動作確認")
     parser.add_argument("--from-date", default=str(date.today() - timedelta(days=1)), help="取得開始日 (YYYY-MM-DD)")

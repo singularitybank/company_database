@@ -1,0 +1,258 @@
+{
+  "source": "Gビズインフォ 決算情報 XMLファイル定義",
+  "note": "「Metadata」タグ内の項目はファイルダウンロード時に「メタデータを出力する」を選択した場合にのみ出力されます。",
+  "fields": [
+    {
+      "no": 1,
+      "depth": "01",
+      "name": "決算情報",
+      "tag": "FinancialInformation",
+      "type": "-",
+      "description": "-",
+      "metadata_only": false
+    },
+    {
+      "no": 2,
+      "depth": "02",
+      "name": "官報掲載情報",
+      "tag": "KanpouPostedInformation",
+      "type": "-",
+      "description": "-",
+      "metadata_only": false
+    },
+    {
+      "no": 3,
+      "depth": "03",
+      "name": "記番号",
+      "tag": "DataName",
+      "type": "string",
+      "description": "データ識別番号",
+      "metadata_only": false
+    },
+    {
+      "no": 4,
+      "depth": "03",
+      "name": "ステータス",
+      "tag": "Status",
+      "type": "string",
+      "description": "公開ステータス。Add：追加（データを追加）、Replace：差替（官報の訂正・正誤記事に基づく修正）",
+      "metadata_only": false
+    },
+    {
+      "no": 5,
+      "depth": "03",
+      "name": "発行日",
+      "tag": "IssueDate",
+      "type": "string",
+      "description": "官報発行日。YYYY年MM月DD日で表記",
+      "metadata_only": false
+    },
+    {
+      "no": 6,
+      "depth": "03",
+      "name": "官報種",
+      "tag": "Classification",
+      "type": "string",
+      "description": "官報の発行形態（本紙、号外などの別）",
+      "metadata_only": false
+    },
+    {
+      "no": 7,
+      "depth": "03",
+      "name": "号数",
+      "tag": "Number",
+      "type": "string",
+      "description": "官報掲載号数",
+      "metadata_only": false
+    },
+    {
+      "no": 8,
+      "depth": "03",
+      "name": "頁",
+      "tag": "Page",
+      "type": "string",
+      "description": "官報掲載頁",
+      "metadata_only": false
+    },
+    {
+      "no": 9,
+      "depth": "02",
+      "name": "法人情報",
+      "tag": "CorporateInformation",
+      "type": "-",
+      "description": "",
+      "metadata_only": false
+    },
+    {
+      "no": 10,
+      "depth": "03",
+      "name": "期",
+      "tag": "Period",
+      "type": "string",
+      "description": "決算公告期",
+      "metadata_only": false
+    },
+    {
+      "no": 11,
+      "depth": "03",
+      "name": "公開日(官報掲載日又は定時株主総会日)",
+      "tag": "Release",
+      "type": "string",
+      "description": "公開日(官報掲載日又は定時株主総会日)。YYYY年M月D日で表記",
+      "metadata_only": false
+    },
+    {
+      "no": 12,
+      "depth": "03",
+      "name": "法人名",
+      "tag": "CompanyName",
+      "type": "string",
+      "description": "法人名",
+      "metadata_only": false
+    },
+    {
+      "no": 13,
+      "depth": "03",
+      "name": "単位",
+      "tag": "Unit",
+      "type": "string",
+      "description": "金額の単位",
+      "metadata_only": false
+    },
+    {
+      "no": 14,
+      "depth": "03",
+      "name": "法人番号",
+      "tag": "CorporateNumber",
+      "type": "string",
+      "description": "法人番号",
+      "metadata_only": false
+    },
+    {
+      "no": 15,
+      "depth": "02",
+      "name": "表の情報",
+      "tag": "Report",
+      "type": "-",
+      "description": "",
+      "metadata_only": false
+    },
+    {
+      "no": 16,
+      "depth": "03",
+      "name": "表名",
+      "tag": "ReportName",
+      "type": "string",
+      "description": "表名。・貸借対照表の要旨・損益計算書の要旨",
+      "metadata_only": false
+    },
+    {
+      "no": 17,
+      "depth": "04",
+      "name": "日付または期間",
+      "tag": "BsPlDate",
+      "type": "string",
+      "description": "日付または期間。・YYYY年M月D日現在・自YYYY年M月D日～至YYYY年M月D日",
+      "metadata_only": false
+    },
+    {
+      "no": 18,
+      "depth": "05",
+      "name": "部",
+      "tag": "Division",
+      "type": "string",
+      "description": "部。・資産の部・負債及び純資産の部・負債及び正味財産の部・負債の部・純資産の部",
+      "metadata_only": false
+    },
+    {
+      "no": 19,
+      "depth": "06",
+      "name": "明細情報",
+      "tag": "Meisai",
+      "type": "-",
+      "description": "",
+      "metadata_only": false
+    },
+    {
+      "no": 20,
+      "depth": "07",
+      "name": "勘定科目名",
+      "tag": "Subject",
+      "type": "string",
+      "description": "勘定科目名",
+      "metadata_only": false
+    },
+    {
+      "no": 21,
+      "depth": "07",
+      "name": "金額",
+      "tag": "Amount",
+      "type": "string",
+      "description": "金額",
+      "metadata_only": false
+    },
+    {
+      "no": 22,
+      "depth": "02",
+      "name": "メタデータ",
+      "tag": "Metadata",
+      "type": "-",
+      "description": "",
+      "metadata_only": true
+    },
+    {
+      "no": 23,
+      "depth": "03",
+      "name": "キー情報",
+      "tag": "KeyField",
+      "type": "string",
+      "description": "gBizINFOが付番する一意となる識別子を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 24,
+      "depth": "03",
+      "name": "データ品質",
+      "tag": "DataQuality",
+      "type": "string",
+      "description": "YYYY年MM月DD日",
+      "metadata_only": true
+    },
+    {
+      "no": 25,
+      "depth": "03",
+      "name": "出典元",
+      "tag": "Source",
+      "type": "string",
+      "description": "データを取得したシステム名称または行政庁名を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 26,
+      "depth": "03",
+      "name": "データ取込頻度",
+      "tag": "ImportFrequency",
+      "type": "string",
+      "description": "Gビズインフォへのデータ取込頻度を示す。固定値「月次」",
+      "metadata_only": true
+    },
+    {
+      "no": 27,
+      "depth": "03",
+      "name": "最終取得日",
+      "tag": "Issued",
+      "type": "string",
+      "description": "データを外部システムから最後に取得した日付を示す。入力形式：YYYY年MM月DD日",
+      "metadata_only": true
+    },
+    {
+      "no": 28,
+      "depth": "03",
+      "name": "最終更新日",
+      "tag": "Updated",
+      "type": "string",
+      "description": "Gビズインフォ上でデータが最後に更新・修正された日付を示す。入力形式：YYYY年MM月DD日",
+      "metadata_only": true
+    }
+  ]
+}

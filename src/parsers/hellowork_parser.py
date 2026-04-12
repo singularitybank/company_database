@@ -12,26 +12,18 @@ scrape_details() が保存したHTMLファイルを読み込み、
 """
 
 import logging
+import sys
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Optional
 
 import pandas as pd
-import yaml
 from bs4 import BeautifulSoup
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from src.config import hellowork as _cfg
+
 logger = logging.getLogger(__name__)
-
-
-# ---------------------------------------------------------------------------
-# 設定読み込み
-# ---------------------------------------------------------------------------
-
-def _load_config() -> dict:
-    """config/config.yaml の hellowork セクションを返す。"""
-    config_path = Path(__file__).resolve().parents[2] / "config" / "config.yaml"
-    with open(config_path, encoding="utf-8") as f:
-        return yaml.safe_load(f)["hellowork"]
 
 
 # ---------------------------------------------------------------------------
@@ -688,8 +680,7 @@ if __name__ == "__main__":
             print(f"  {field_name:40s} {count:3d}/{total}  {bar}")
     else:
         # 通常モード：config の html_dir/{YYYYMMDD} を読んで staging_dir に Parquet 出力
-        cfg = _load_config()
         date_str = args.date.strftime("%Y%m%d")
-        html_dir = Path(cfg["html_dir"]) / date_str
-        staging_dir = Path(__file__).resolve().parents[2] / cfg["staging_dir"]
+        html_dir = Path(_cfg["html_dir"]) / date_str
+        staging_dir = Path(__file__).resolve().parents[2] / _cfg["staging_dir"]
         parse_to_parquet(html_dir, staging_dir)

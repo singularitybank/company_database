@@ -20,29 +20,9 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-from dotenv import load_dotenv
-load_dotenv(BASE_DIR / "config" / ".env")
-
-from src.collectors.nta_diff_collector import ALL_ADDRESS_CODES, fetch_diff
+from src.extractors.nta_diff_collector import ALL_ADDRESS_CODES, fetch_diff
+from src.logging_setup import setup_logging
 from src.processors.diff_processor import apply_diff
-
-# ---------------------------------------------------------------------------
-# ログ設定
-# ---------------------------------------------------------------------------
-
-def _setup_logging(log_dir: Path) -> None:
-    log_dir.mkdir(parents=True, exist_ok=True)
-    log_file = log_dir / f"nta_diff_{date.today().strftime('%Y%m%d')}.log"
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        handlers=[
-            logging.FileHandler(log_file, encoding="utf-8"),
-            logging.StreamHandler(sys.stdout),
-        ],
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -77,7 +57,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    _setup_logging(BASE_DIR / "logs")
+    setup_logging(BASE_DIR / "logs", filename_prefix="nta_diff")
     logger = logging.getLogger(__name__)
 
     address_codes = args.address if args.address else ALL_ADDRESS_CODES

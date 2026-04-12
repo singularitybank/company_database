@@ -7,3 +7,5 @@ data/**/*.db
 __pycache__/
 *.log
 .env
+data/raw/gbizinfo/Hojinjoho_json/*.json
+data/raw/gbizinfo/Kessanjoho/*.xml

@@ -1,0 +1,104 @@
+{
+  "source": "Gビズインフォ 補助金情報 CSVファイル定義",
+  "note": "「キー情報」以降の項目は、ファイルダウンロード時に「メタデータを出力する」を選択した場合にのみ出力されます。",
+  "fields": [
+    {
+      "no": 1,
+      "name": "法人番号",
+      "type": "String",
+      "description": "法人番号の指定を受けた者（以下「法人番号保有者」という。）の法人番号を示すデータ項目。",
+      "metadata_only": false
+    },
+    {
+      "no": 2,
+      "name": "商号または名称",
+      "type": "String",
+      "description": "法人基本情報の商号又は名称。",
+      "metadata_only": false
+    },
+    {
+      "no": 3,
+      "name": "登記住所",
+      "type": "String",
+      "description": "法人基本情報の本社所在地。",
+      "metadata_only": false
+    },
+    {
+      "no": 4,
+      "name": "証明日",
+      "type": "String",
+      "description": "補助金情報の認定日。",
+      "metadata_only": false
+    },
+    {
+      "no": 5,
+      "name": "名称",
+      "type": "String",
+      "description": "補助金情報の活動名称。",
+      "metadata_only": false
+    },
+    {
+      "no": 6,
+      "name": "金額",
+      "type": "String",
+      "description": "補助金情報の活動金額。",
+      "metadata_only": false
+    },
+    {
+      "no": 7,
+      "name": "対象",
+      "type": "String",
+      "description": "補助金情報の対象。",
+      "metadata_only": false
+    },
+    {
+      "no": 8,
+      "name": "発行元",
+      "type": "String",
+      "description": "補助金情報の公表組織。",
+      "metadata_only": false
+    },
+    {
+      "no": 9,
+      "name": "キー情報",
+      "type": "String",
+      "description": "Gビズインフォが付番する一意となる識別子を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 10,
+      "name": "データ品質",
+      "type": "String",
+      "description": "データの区分を以下のいずれかで示す。・政府承認データ・自己申告データ",
+      "metadata_only": true
+    },
+    {
+      "no": 11,
+      "name": "出典元",
+      "type": "String",
+      "description": "データを取得したシステム名称または行政庁名を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 12,
+      "name": "データ取込頻度",
+      "type": "String",
+      "description": "Gビズインフォへのデータ取込頻度を示す。・年次・月次・日次・半年毎",
+      "metadata_only": true
+    },
+    {
+      "no": 13,
+      "name": "最終取得日",
+      "type": "String",
+      "description": "データを外部システムから最後に取得した日付を示す。入力形式：YYYY-MM-DD（西暦-月-日）",
+      "metadata_only": true
+    },
+    {
+      "no": 14,
+      "name": "最終更新日",
+      "type": "String",
+      "description": "Gビズインフォ上でデータが最後に更新・修正された日付を示す。入力形式：YYYY-MM-DD（西暦-月-日）",
+      "metadata_only": true
+    }
+  ]
+}

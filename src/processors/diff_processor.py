@@ -268,11 +268,8 @@ if __name__ == "__main__":
     import argparse
     from datetime import date, timedelta
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
+    from src.logging_setup import setup_logging
+    setup_logging()
 
     BASE_DIR = Path(__file__).resolve().parents[2]
     DB_PATH = BASE_DIR / "data" / "companies.db"
@@ -284,8 +281,8 @@ if __name__ == "__main__":
     parser.add_argument("--db",        default=str(DB_PATH))
     args = parser.parse_args()
 
-    # collector を使って差分を取得してから適用
-    from src.collectors.nta_diff_collector import fetch_diff
+    # extractor を使って差分を取得してから適用
+    from src.extractors.nta_diff_collector import fetch_diff
     records = fetch_diff(args.from_date, args.to_date, address_codes=[args.address])
     result = apply_diff(records, args.db)
     print(f"\n結果: {result.summary()}")

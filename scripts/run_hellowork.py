@@ -29,36 +29,12 @@ from pathlib import Path
 
 # プロジェクトルートを sys.path に追加（src 配下のモジュールを import できるようにする）
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(PROJECT_ROOT / "src"))
+sys.path.insert(0, str(PROJECT_ROOT))
 
-from crawlers.hellowork_crawler import build_driver, crawl, scrape_details
-from parsers.hellowork_parser import _load_config, parse_to_parquet
-
-
-# ---------------------------------------------------------------------------
-# ログ設定
-# ---------------------------------------------------------------------------
-
-def _setup_logging(date_str: str) -> None:
-    """コンソール＋日付別ファイルの二重ログを設定する。"""
-    log_dir = PROJECT_ROOT / "logs"
-    log_dir.mkdir(exist_ok=True)
-    log_path = log_dir / f"hellowork_{date_str}.log"
-
-    fmt = "%(asctime)s [%(levelname)s] %(message)s"
-    datefmt = "%Y-%m-%d %H:%M:%S"
-
-    # Windows の CP932 端末でも文字化けしないよう errors="replace"
-    console_handler = logging.StreamHandler(
-        stream=open(sys.stdout.fileno(), mode="w", encoding="utf-8",
-                    errors="replace", closefd=False)
-    )
-    console_handler.setFormatter(logging.Formatter(fmt, datefmt))
-
-    file_handler = logging.FileHandler(log_path, encoding="utf-8")
-    file_handler.setFormatter(logging.Formatter(fmt, datefmt))
-
-    logging.basicConfig(level=logging.INFO, handlers=[console_handler, file_handler])
+from src.config import hellowork as _cfg
+from src.crawlers.hellowork_crawler import build_driver, crawl, scrape_details
+from src.logging_setup import setup_logging
+from src.parsers.hellowork_parser import parse_to_parquet
 
 
 # ---------------------------------------------------------------------------
@@ -86,16 +62,15 @@ def main() -> int:
     args = parser.parse_args()
 
     date_str = args.date.strftime("%Y%m%d")
-    _setup_logging(date_str)
+    setup_logging(PROJECT_ROOT / "logs", log_filename=f"hellowork_{date_str}")
     logger = logging.getLogger(__name__)
 
     logger.info("=" * 60)
     logger.info("ハローワーク 日次バッチ 開始  対象日付: %s", args.date)
     logger.info("=" * 60)
 
-    cfg = _load_config()
-    html_dir = Path(cfg["html_dir"]) / date_str
-    staging_dir = PROJECT_ROOT / cfg["staging_dir"]
+    html_dir = Path(_cfg["html_dir"]) / date_str
+    staging_dir = PROJECT_ROOT / _cfg["staging_dir"]
     batch_start = time.time()
 
     # ── STEP 1 & 2: クロール ─────────────────────────────────────────────────

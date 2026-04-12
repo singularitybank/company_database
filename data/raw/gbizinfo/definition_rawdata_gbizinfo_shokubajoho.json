@@ -1,0 +1,181 @@
+{
+  "source": "Gビズインフォ 職場情報 CSVファイル定義",
+  "note": "「キー情報」以降の項目は、ファイルダウンロード時に「メタデータを出力する」を選択した場合にのみ出力されます。",
+  "fields": [
+    {
+      "no": 1,
+      "name": "法人番号",
+      "type": "String",
+      "description": "法人番号の指定を受けた者（以下「法人番号保有者」という。）の法人番号を示すデータ項目。",
+      "metadata_only": false
+    },
+    {
+      "no": 2,
+      "name": "商号または名称",
+      "type": "String",
+      "description": "法人基本情報の商号又は名称。",
+      "metadata_only": false
+    },
+    {
+      "no": 3,
+      "name": "登記住所",
+      "type": "String",
+      "description": "法人基本情報の本社所在地。",
+      "metadata_only": false
+    },
+    {
+      "no": 4,
+      "name": "平均継続勤務年数-範囲",
+      "type": "String",
+      "description": "職場情報の平均継続勤続年数-範囲。",
+      "metadata_only": false
+    },
+    {
+      "no": 5,
+      "name": "平均継続勤務年数-男性",
+      "type": "String",
+      "description": "職場情報の平均継続勤続年数-男性。",
+      "metadata_only": false
+    },
+    {
+      "no": 6,
+      "name": "平均継続勤務年数-女性",
+      "type": "String",
+      "description": "職場情報の平均継続勤続年数-女性。",
+      "metadata_only": false
+    },
+    {
+      "no": 7,
+      "name": "正社員の平均継続勤務年数",
+      "type": "String",
+      "description": "職場情報の正社員の平均継続勤務年数。",
+      "metadata_only": false
+    },
+    {
+      "no": 8,
+      "name": "従業員の平均年齢",
+      "type": "String",
+      "description": "職場情報の従業員の平均年齢。",
+      "metadata_only": false
+    },
+    {
+      "no": 9,
+      "name": "月平均所定外労働時間",
+      "type": "String",
+      "description": "職場情報の月平均所定外労働時間。",
+      "metadata_only": false
+    },
+    {
+      "no": 10,
+      "name": "労働者に占める女性労働者の割合-範囲",
+      "type": "String",
+      "description": "職場情報の労働者に占める女性労働者の割合-範囲。",
+      "metadata_only": false
+    },
+    {
+      "no": 11,
+      "name": "労働者に占める女性労働者の割合",
+      "type": "String",
+      "description": "職場情報の労働者に占める女性労働者の割合。",
+      "metadata_only": false
+    },
+    {
+      "no": 12,
+      "name": "女性管理職人数",
+      "type": "String",
+      "description": "職場情報の女性管理職人数。",
+      "metadata_only": false
+    },
+    {
+      "no": 13,
+      "name": "管理職全体人数（男女計）",
+      "type": "String",
+      "description": "職場情報の管理職全体人数（男女計）。",
+      "metadata_only": false
+    },
+    {
+      "no": 14,
+      "name": "女性役員人数",
+      "type": "String",
+      "description": "職場情報の女性役員人数。",
+      "metadata_only": false
+    },
+    {
+      "no": 15,
+      "name": "役員全体人数（男女計）",
+      "type": "String",
+      "description": "職場情報の役員全体人数（男女計）。",
+      "metadata_only": false
+    },
+    {
+      "no": 16,
+      "name": "育児休業対象者数（男性）",
+      "type": "String",
+      "description": "職場情報の育児休業対象者数（男性）。",
+      "metadata_only": false
+    },
+    {
+      "no": 17,
+      "name": "育児休業対象者数（女性）",
+      "type": "String",
+      "description": "職場情報の育児休業対象者数（女性）。",
+      "metadata_only": false
+    },
+    {
+      "no": 18,
+      "name": "育児休業取得者数（男性）",
+      "type": "String",
+      "description": "職場情報の育児休業取得者数（男性）。",
+      "metadata_only": false
+    },
+    {
+      "no": 19,
+      "name": "育児休業取得者数（女性）",
+      "type": "String",
+      "description": "職場情報の育児休業取得者数（女性）。",
+      "metadata_only": false
+    },
+    {
+      "no": 20,
+      "name": "キー情報",
+      "type": "String",
+      "description": "Gビズインフォが付番する一意となる識別子を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 21,
+      "name": "データ品質",
+      "type": "String",
+      "description": "データの区分を以下のいずれかで示す。・政府承認データ・自己申告データ",
+      "metadata_only": true
+    },
+    {
+      "no": 22,
+      "name": "出典元",
+      "type": "String",
+      "description": "データを取得したシステム名称または行政庁名を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 23,
+      "name": "データ取込頻度",
+      "type": "String",
+      "description": "Gビズインフォへのデータ取込頻度を示す。・年次・月次・日次・半年毎",
+      "metadata_only": true
+    },
+    {
+      "no": 24,
+      "name": "最終取得日",
+      "type": "String",
+      "description": "データを外部システムから最後に取得した日付を示す。入力形式：YYYY-MM-DD（西暦-月-日）",
+      "metadata_only": true
+    },
+    {
+      "no": 25,
+      "name": "最終更新日",
+      "type": "String",
+      "description": "Gビズインフォ上でデータが最後に更新・修正された日付を示す。入力形式：YYYY-MM-DD（西暦-月-日）",
+      "metadata_only": true
+    }
+  ]
+}

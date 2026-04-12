@@ -17,6 +17,7 @@
   アクセス間隔を設けて過度な負荷をかけないよう制御しています。
 """
 import os
+import sys
 import pandas as pd
 import datetime
 import logging
@@ -27,7 +28,8 @@ from typing import Optional
 from pathlib import Path
 import json
 import glob
-import yaml
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from selenium import webdriver
 from selenium.common.exceptions import (
@@ -47,13 +49,7 @@ logger = logging.getLogger(__name__)
 # 設定読み込み
 # ---------------------------------------------------------------------------
 
-def _load_config() -> dict:
-    """config/config.yaml の hellowork セクションを返す。"""
-    config_path = Path(__file__).resolve().parents[2] / "config" / "config.yaml"
-    with open(config_path, encoding="utf-8") as f:
-        return yaml.safe_load(f)["hellowork"]
-
-_cfg = _load_config()
+from src.config import hellowork as _cfg
 
 # ---------------------------------------------------------------------------
 # 定数
@@ -535,11 +531,8 @@ def scrape_details(
 # Main
 # ---------------------------------------------------------------------------
 def main(target_date: datetime.date):
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
+    from src.logging_setup import setup_logging
+    setup_logging()
     logger.info("対象日付: %s", target_date)
 
     driver = build_driver()

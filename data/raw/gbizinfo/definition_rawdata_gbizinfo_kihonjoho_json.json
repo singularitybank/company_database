@@ -1,0 +1,483 @@
+{
+  "source": "Gビズインフォ 法人情報 JSONファイル定義",
+  "note": "法人活動情報を１件以上保有している法人のみ出力。「meta-data」オブジェクト及び内部のキーは、ファイルダウンロード時に「メタデータを出力する」を選択した場合にのみ出力されます。",
+  "fields": [
+    {
+      "no": 1,
+      "depth": "01",
+      "name": "法人情報",
+      "key": "-",
+      "type": "Array",
+      "description": "",
+      "metadata_only": false
+    },
+    {
+      "no": 2,
+      "depth": "03",
+      "name": "法人番号",
+      "key": "corporate_number",
+      "type": "string",
+      "description": "法人番号の指定を受けた者（以下「法人番号保有者」という。）の法人番号を示すデータ項目。",
+      "metadata_only": false
+    },
+    {
+      "no": 3,
+      "depth": "03",
+      "name": "法人名",
+      "key": "name",
+      "type": "string",
+      "description": "法人番号保有者の商号又は名称を示すデータ項目。",
+      "metadata_only": false
+    },
+    {
+      "no": 4,
+      "depth": "03",
+      "name": "法人名フリガナ",
+      "key": "kana",
+      "type": "string",
+      "description": "法人番号保有者の商号又は名称を示すデータ項目。",
+      "metadata_only": false
+    },
+    {
+      "no": 5,
+      "depth": "03",
+      "name": "法人名英語",
+      "key": "name_en",
+      "type": "string",
+      "description": "法人番号保有者の商号又は名称を示すデータ項目。",
+      "metadata_only": false
+    },
+    {
+      "no": 6,
+      "depth": "03",
+      "name": "郵便番号",
+      "key": "postal_code",
+      "type": "string",
+      "description": "国内所在地の文字情報を基に設定した郵便番号。",
+      "metadata_only": false
+    },
+    {
+      "no": 7,
+      "depth": "03",
+      "name": "本社所在地",
+      "key": "location",
+      "type": "string",
+      "description": "法人番号保有者の本店又は主たる事務所の所在地。",
+      "metadata_only": false
+    },
+    {
+      "no": 8,
+      "depth": "03",
+      "name": "処理区分",
+      "key": "process",
+      "type": "string",
+      "description": "法人番号の指定、商号又は所在地に変更等が発生した事由をコード値で表す項目。",
+      "metadata_only": false
+    },
+    {
+      "no": 9,
+      "depth": "03",
+      "name": "訂正区分",
+      "key": "aggregated_year",
+      "type": "string",
+      "description": "提供していたデータについて、訂正が生じた場合などに値を設定するデータ項目。",
+      "metadata_only": false
+    },
+    {
+      "no": 10,
+      "depth": "03",
+      "name": "状態",
+      "key": "status",
+      "type": "string",
+      "description": "処理区分が\"21\"の場合、\"閉鎖\"を出力。それ以外の場合は\"\"を出力。",
+      "metadata_only": false
+    },
+    {
+      "no": 11,
+      "depth": "03",
+      "name": "登記記録の閉鎖等年月日",
+      "key": "close_date",
+      "type": "string",
+      "description": "登記記録の閉鎖等の事由が生じた年月日を表す。",
+      "metadata_only": false
+    },
+    {
+      "no": 12,
+      "depth": "03",
+      "name": "登記記録の閉鎖等の事由",
+      "key": "close_cause",
+      "type": "string",
+      "description": "閉鎖の事由は、登記記録の閉鎖等が生じた事由を表すデータ項目。",
+      "metadata_only": false
+    },
+    {
+      "no": 13,
+      "depth": "03",
+      "name": "法人種別",
+      "key": "kind",
+      "type": "string",
+      "description": "法人種別を判別するためのデータ項目。",
+      "metadata_only": false
+    },
+    {
+      "no": 14,
+      "depth": "03",
+      "name": "法人代表者名",
+      "key": "representative_name",
+      "type": "string",
+      "description": "法人番号保有者の代表者役職氏名。",
+      "metadata_only": false
+    },
+    {
+      "no": 15,
+      "depth": "03",
+      "name": "資本金",
+      "key": "capital_stock",
+      "type": "string",
+      "description": "法人番号保有者の資本金。",
+      "metadata_only": false
+    },
+    {
+      "no": 16,
+      "depth": "03",
+      "name": "従業員数",
+      "key": "employee_number",
+      "type": "string",
+      "description": "法人番号保有者の従業員数。",
+      "metadata_only": false
+    },
+    {
+      "no": 17,
+      "depth": "03",
+      "name": "企業規模詳細(男性)",
+      "key": "company_size_male",
+      "type": "string",
+      "description": "法人番号保有者の従業員数の内、男性が占める人数。",
+      "metadata_only": false
+    },
+    {
+      "no": 18,
+      "depth": "03",
+      "name": "企業規模詳細(女性)",
+      "key": "company_size_female",
+      "type": "string",
+      "description": "法人番号保有者の従業員数の内、女性が占める人数。",
+      "metadata_only": false
+    },
+    {
+      "no": 19,
+      "depth": "03",
+      "name": "事業概要",
+      "key": "business_summary",
+      "type": "string",
+      "description": "法人番号所有者の事業概要。",
+      "metadata_only": false
+    },
+    {
+      "no": 20,
+      "depth": "03",
+      "name": "企業ホームページ",
+      "key": "company_url",
+      "type": "string",
+      "description": "法人番号所有者の企業ホームページ。",
+      "metadata_only": false
+    },
+    {
+      "no": 21,
+      "depth": "03",
+      "name": "創業年",
+      "key": "founding_year",
+      "type": "string",
+      "description": "法人番号所有者の創業年。",
+      "metadata_only": false
+    },
+    {
+      "no": 22,
+      "depth": "03",
+      "name": "業種",
+      "key": "industry",
+      "type": "Array",
+      "description": "法人番号所有者の事業種目。",
+      "metadata_only": false
+    },
+    {
+      "no": 23,
+      "depth": "03",
+      "name": "設立年月日",
+      "key": "date_of_establishment",
+      "type": "string",
+      "description": "法人番号所有者の設立年月日。",
+      "metadata_only": false
+    },
+    {
+      "no": 24,
+      "depth": "03",
+      "name": "全省庁統一資格の営業品目",
+      "key": "business_items",
+      "type": "Array",
+      "description": "該当資格者の営業品目。保有している営業品目コードをすべて全角カンマ区切りで出力する。",
+      "metadata_only": false
+    },
+    {
+      "no": 25,
+      "depth": "03",
+      "name": "全省庁統一資格の資格等級",
+      "key": "qualification_grade",
+      "type": "string",
+      "description": "全省庁統一資格の資格等級。格納データは\"X|X|X|X\"となり、物品の製造/物品の販売/役務の提供等/物品の買受けの順に対応。",
+      "metadata_only": false
+    },
+    {
+      "no": 26,
+      "depth": "03",
+      "name": "メタデータ",
+      "key": "meta-data",
+      "type": "Object",
+      "description": "",
+      "metadata_only": true
+    },
+    {
+      "no": 27,
+      "depth": "04",
+      "name": "キー情報",
+      "key": "key_field",
+      "type": "string",
+      "description": "gBizINFOが付番する一意となる識別子を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 28,
+      "depth": "04",
+      "name": "データ品質",
+      "key": "data_quality",
+      "type": "Object",
+      "description": "データの区分を以下のいずれかで示す。・政府承認データ・自己申告データ",
+      "metadata_only": true
+    },
+    {
+      "no": 29,
+      "depth": "05",
+      "name": "項目別メタデータ",
+      "key": "{項目名}",
+      "type": "string",
+      "description": "",
+      "metadata_only": true
+    },
+    {
+      "no": 30,
+      "depth": "04",
+      "name": "出典元",
+      "key": "source",
+      "type": "Object",
+      "description": "データを取得したシステム名称または行政庁名を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 31,
+      "depth": "05",
+      "name": "項目別メタデータ",
+      "key": "{項目名}",
+      "type": "string",
+      "description": "",
+      "metadata_only": true
+    },
+    {
+      "no": 32,
+      "depth": "04",
+      "name": "データ取込頻度",
+      "key": "import_frequency",
+      "type": "Object",
+      "description": "Gビズインフォへのデータ取込頻度を示す。・年次・月次・日次・半年毎",
+      "metadata_only": true
+    },
+    {
+      "no": 33,
+      "depth": "05",
+      "name": "項目別メタデータ",
+      "key": "{項目名}",
+      "type": "string",
+      "description": "",
+      "metadata_only": true
+    },
+    {
+      "no": 34,
+      "depth": "04",
+      "name": "最終取得日",
+      "key": "acquisition_date",
+      "type": "Object",
+      "description": "データを外部システムから最後に取得した日付を示す。入力形式：YYYY-MM-DD（西暦-月-日）",
+      "metadata_only": true
+    },
+    {
+      "no": 35,
+      "depth": "05",
+      "name": "項目別メタデータ",
+      "key": "{項目名}",
+      "type": "string",
+      "description": "",
+      "metadata_only": true
+    },
+    {
+      "no": 36,
+      "depth": "04",
+      "name": "最終更新日",
+      "key": "updated_day",
+      "type": "Object",
+      "description": "Gビズインフォ上でデータが最後に更新・修正された日付を示す。入力形式：YYYY-MM-DD（西暦-月-日）",
+      "metadata_only": true
+    },
+    {
+      "no": 37,
+      "depth": "05",
+      "name": "項目別メタデータ",
+      "key": "{項目名}",
+      "type": "string",
+      "description": "",
+      "metadata_only": true
+    },
+    {
+      "no": 38,
+      "depth": "03",
+      "name": "補助金情報",
+      "key": "subsidy",
+      "type": "Array",
+      "description": "",
+      "metadata_only": false
+    },
+    {
+      "no": 39,
+      "depth": "05",
+      "name": "認定日",
+      "key": "date_of_approval",
+      "type": "string",
+      "description": "補助金情報の認定日。",
+      "metadata_only": false
+    },
+    {
+      "no": 40,
+      "depth": "05",
+      "name": "補助金等",
+      "key": "title",
+      "type": "string",
+      "description": "補助金情報の活動名称。",
+      "metadata_only": false
+    },
+    {
+      "no": 41,
+      "depth": "05",
+      "name": "金額",
+      "key": "amount",
+      "type": "string",
+      "description": "補助金情報の活動金額。",
+      "metadata_only": false
+    },
+    {
+      "no": 42,
+      "depth": "05",
+      "name": "対象",
+      "key": "target",
+      "type": "string",
+      "description": "補助金情報の対象。",
+      "metadata_only": false
+    },
+    {
+      "no": 43,
+      "depth": "05",
+      "name": "府省",
+      "key": "government_departments",
+      "type": "string",
+      "description": "補助金情報の公表組織。",
+      "metadata_only": false
+    },
+    {
+      "no": 44,
+      "depth": "05",
+      "name": "メタデータ",
+      "key": "meta-data",
+      "type": "Object",
+      "description": "",
+      "metadata_only": true
+    },
+    {
+      "no": 45,
+      "depth": "06",
+      "name": "キー情報",
+      "key": "key_field",
+      "type": "string",
+      "description": "gBizINFOが付番する一意となる識別子を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 46,
+      "depth": "06",
+      "name": "データ品質",
+      "key": "data_quality",
+      "type": "string",
+      "description": "データの区分を以下のいずれかで示す。・政府承認データ・自己申告データ",
+      "metadata_only": true
+    },
+    {
+      "no": 47,
+      "depth": "06",
+      "name": "出典元",
+      "key": "source",
+      "type": "string",
+      "description": "データを取得したシステム名称または行政庁名を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 48,
+      "depth": "06",
+      "name": "データ取込頻度",
+      "key": "import_frequency",
+      "type": "string",
+      "description": "Gビズインフォへのデータ取込頻度を示す。・年次・月次・日次・半年毎",
+      "metadata_only": true
+    },
+    {
+      "no": 49,
+      "depth": "06",
+      "name": "最終取得日",
+      "key": "acquisition_date",
+      "type": "string",
+      "description": "データを外部システムから最後に取得した日付を示す。入力形式：YYYY-MM-DD（西暦-月-日）",
+      "metadata_only": true
+    },
+    {
+      "no": 50,
+      "depth": "06",
+      "name": "最終更新日",
+      "key": "updated_day",
+      "type": "string",
+      "description": "Gビズインフォ上でデータが最後に更新・修正された日付を示す。入力形式：YYYY-MM-DD（西暦-月-日）",
+      "metadata_only": true
+    },
+    {
+      "no": 51,
+      "depth": "03",
+      "name": "表彰情報",
+      "key": "commendation",
+      "type": "Array",
+      "description": "",
+      "metadata_only": false
+    },
+    {
+      "no": 52,
+      "depth": "05",
+      "name": "年月日",
+      "key": "date_of_commendation",
+      "type": "string",
+      "description": "表彰情報の認定日。",
+      "metadata_only": false
+    },
+    {
+      "no": 53,
+      "depth": "05",
+      "name": "表彰名",
+      "key": "title",
+      "type": "string",
+      "description": "表彰情報の活動名称。",
+      "metadata_only": false
+    }
+  ]
+}

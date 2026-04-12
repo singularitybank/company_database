@@ -9,7 +9,11 @@
 
 import logging
 import sqlite3
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from src.utils.db_utils import open_connection
 
 logger = logging.getLogger(__name__)
 
@@ -155,11 +159,7 @@ def init_db(db_path: str | Path) -> sqlite3.Connection:
     既にテーブルが存在する場合は何もしない（IF NOT EXISTS）。
     既存DBには不足カラムをマイグレーションで追加する。
     """
-    db_path = Path(db_path)
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-
-    conn = sqlite3.connect(db_path)
-    conn.execute("PRAGMA journal_mode = WAL;")
+    conn = open_connection(db_path)
     conn.execute("PRAGMA foreign_keys = ON;")
 
     conn.execute(DDL_COMPANIES)

@@ -1,0 +1,153 @@
+{
+  "source": "Gビズインフォ 特許情報 CSVファイル定義",
+  "note": "「キー情報」以降の項目は、ファイルダウンロード時に「メタデータを出力する」を選択した場合にのみ出力されます。",
+  "fields": [
+    {
+      "no": 1,
+      "name": "法人番号",
+      "type": "String",
+      "description": "法人番号の指定を受けた者（以下「法人番号保有者」という。）の法人番号を示すデータ項目。",
+      "metadata_only": false
+    },
+    {
+      "no": 2,
+      "name": "商号または名称",
+      "type": "String",
+      "description": "法人基本情報の商号又は名称。",
+      "metadata_only": false
+    },
+    {
+      "no": 3,
+      "name": "登記住所",
+      "type": "String",
+      "description": "法人基本情報の本社所在地。",
+      "metadata_only": false
+    },
+    {
+      "no": 4,
+      "name": "特許/意匠/商標",
+      "type": "String",
+      "description": "特許データの場合には値「特許」、意匠データの場合には値「意匠」、商標データの場合には値「商標」を出力する。",
+      "metadata_only": false
+    },
+    {
+      "no": 5,
+      "name": "登録番号",
+      "type": "String",
+      "description": "特許情報の登録番号。",
+      "metadata_only": false
+    },
+    {
+      "no": 6,
+      "name": "出願年月日",
+      "type": "String",
+      "description": "特許情報の出願年月日。",
+      "metadata_only": false
+    },
+    {
+      "no": 7,
+      "name": "特許_FI分類_コード値",
+      "type": "String",
+      "description": "特許情報の分類種別を示すコード値。特許データの場合のみ値が出力される。",
+      "metadata_only": false
+    },
+    {
+      "no": 8,
+      "name": "特許_FI分類_コード値（日本語）",
+      "type": "String",
+      "description": "「特許_FI分類_コード値」に対応する名称を出力する。特許データの場合のみ値が出力される。",
+      "metadata_only": false
+    },
+    {
+      "no": 9,
+      "name": "特許_Fターム-テーマコード",
+      "type": "String",
+      "description": "特許情報のFターム-テーマコードを示すコード値。特許データの場合のみ値が出力される。",
+      "metadata_only": false
+    },
+    {
+      "no": 10,
+      "name": "意匠_意匠新分類_コード値",
+      "type": "String",
+      "description": "特許情報の分類種別を示すコード値。商標特許データの場合のみ値が出力される。",
+      "metadata_only": false
+    },
+    {
+      "no": 11,
+      "name": "意匠_意匠新分類_コード値(日本語)",
+      "type": "String",
+      "description": "「商標_類_コード値」に対応する名称を出力する。商標データの場合のみ値が出力される。",
+      "metadata_only": false
+    },
+    {
+      "no": 12,
+      "name": "商標_類_コード値",
+      "type": "String",
+      "description": "特許情報の分類種別を示すコード値。商標特許データの場合のみ値が出力される。",
+      "metadata_only": false
+    },
+    {
+      "no": 13,
+      "name": "商標_類_コード値(日本語)",
+      "type": "String",
+      "description": "「商標_類_コード値」に対応する名称を出力する。商標データの場合のみ値が出力される。",
+      "metadata_only": false
+    },
+    {
+      "no": 14,
+      "name": "発明の名称(等)/意匠に係る物品/表示用商標",
+      "type": "String",
+      "description": "特許データの場合には発明の名称、意匠データの場合には意匠に関わる物品、商標データの場合には表示用商標を出力する。",
+      "metadata_only": false
+    },
+    {
+      "no": 15,
+      "name": "文献固定アドレス",
+      "type": "String",
+      "description": "「J-PlatPat」で提供される、特定の文献（特許、実用新案、意匠、商標など）にアクセスするためのURL。※将来的に提供を開始予定の項目であり、現在は空。",
+      "metadata_only": false
+    },
+    {
+      "no": 16,
+      "name": "キー情報",
+      "type": "String",
+      "description": "Gビズインフォが付番する一意となる識別子を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 17,
+      "name": "データ品質",
+      "type": "String",
+      "description": "データの区分を以下のいずれかで示す。・政府承認データ・自己申告データ",
+      "metadata_only": true
+    },
+    {
+      "no": 18,
+      "name": "出典元",
+      "type": "String",
+      "description": "データを取得したシステム名称または行政庁名を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 19,
+      "name": "データ取込頻度",
+      "type": "String",
+      "description": "Gビズインフォへのデータ取込頻度を示す。・年次・月次・日次・半年毎",
+      "metadata_only": true
+    },
+    {
+      "no": 20,
+      "name": "最終取得日",
+      "type": "String",
+      "description": "データを外部システムから最後に取得した日付を示す。入力形式：YYYY-MM-DD（西暦-月-日）",
+      "metadata_only": true
+    },
+    {
+      "no": 21,
+      "name": "最終更新日",
+      "type": "String",
+      "description": "Gビズインフォ上でデータが最後に更新・修正された日付を示す。入力形式：YYYY-MM-DD（西暦-月-日）",
+      "metadata_only": true
+    }
+  ]
+}

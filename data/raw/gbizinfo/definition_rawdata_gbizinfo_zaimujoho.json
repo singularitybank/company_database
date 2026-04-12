@@ -1,0 +1,328 @@
+{
+  "source": "Gビズインフォ 財務情報 CSVファイル定義",
+  "note": "「キー情報」以降の項目は、ファイルダウンロード時に「メタデータを出力する」を選択した場合にのみ出力されます。",
+  "fields": [
+    {
+      "no": 1,
+      "name": "法人番号",
+      "type": "String",
+      "description": "法人番号の指定を受けた者（以下「法人番号保有者」という。）の法人番号を示すデータ項目。",
+      "metadata_only": false
+    },
+    {
+      "no": 2,
+      "name": "商号または名称",
+      "type": "String",
+      "description": "法人基本情報の商号又は名称。",
+      "metadata_only": false
+    },
+    {
+      "no": 3,
+      "name": "登記住所",
+      "type": "String",
+      "description": "法人基本情報の本社所在地。",
+      "metadata_only": false
+    },
+    {
+      "no": 4,
+      "name": "会計基準",
+      "type": "String",
+      "description": "財務情報の会計基準。",
+      "metadata_only": false
+    },
+    {
+      "no": 5,
+      "name": "事業年度",
+      "type": "String",
+      "description": "財務情報の事業年度。",
+      "metadata_only": false
+    },
+    {
+      "no": 6,
+      "name": "回次",
+      "type": "String",
+      "description": "財務情報の回次。",
+      "metadata_only": false
+    },
+    {
+      "no": 7,
+      "name": "売上高",
+      "type": "String",
+      "description": "財務情報の売上高。",
+      "metadata_only": false
+    },
+    {
+      "no": 8,
+      "name": "売上高（単位)",
+      "type": "String",
+      "description": "財務情報の売上高の単位。",
+      "metadata_only": false
+    },
+    {
+      "no": 9,
+      "name": "営業収益",
+      "type": "String",
+      "description": "財務情報の営業収益。",
+      "metadata_only": false
+    },
+    {
+      "no": 10,
+      "name": "営業収益（単位）",
+      "type": "String",
+      "description": "財務情報の営業収益の単位。",
+      "metadata_only": false
+    },
+    {
+      "no": 11,
+      "name": "営業収入",
+      "type": "String",
+      "description": "財務情報の営業収入。",
+      "metadata_only": false
+    },
+    {
+      "no": 12,
+      "name": "営業収入（単位）",
+      "type": "String",
+      "description": "財務情報の営業収入の単位。",
+      "metadata_only": false
+    },
+    {
+      "no": 13,
+      "name": "営業総収入",
+      "type": "String",
+      "description": "財務情報の営業総収入。",
+      "metadata_only": false
+    },
+    {
+      "no": 14,
+      "name": "営業総収入（単位）",
+      "type": "String",
+      "description": "財務情報の営業総収入の単位。",
+      "metadata_only": false
+    },
+    {
+      "no": 15,
+      "name": "経常収益",
+      "type": "String",
+      "description": "財務情報の経常収益。",
+      "metadata_only": false
+    },
+    {
+      "no": 16,
+      "name": "経常収益（単位）",
+      "type": "String",
+      "description": "財務情報の経常収益の単位。",
+      "metadata_only": false
+    },
+    {
+      "no": 17,
+      "name": "正味収入保険料",
+      "type": "String",
+      "description": "財務情報の正味収入保険料。",
+      "metadata_only": false
+    },
+    {
+      "no": 18,
+      "name": "正味収入保険料（単位）",
+      "type": "String",
+      "description": "財務情報の正味収入保険料の単位。",
+      "metadata_only": false
+    },
+    {
+      "no": 19,
+      "name": "経常利益又は経常損失（△）",
+      "type": "String",
+      "description": "財務情報の経常利益又は経常損失（△）。",
+      "metadata_only": false
+    },
+    {
+      "no": 20,
+      "name": "経常利益又は経常損失（△）(単位)",
+      "type": "String",
+      "description": "財務情報の経常利益又は経常損失（△）の単位。",
+      "metadata_only": false
+    },
+    {
+      "no": 21,
+      "name": "当期純利益又は当期純損失（△）",
+      "type": "String",
+      "description": "財務情報の当期純利益又は当期純損失（△）。",
+      "metadata_only": false
+    },
+    {
+      "no": 22,
+      "name": "当期純利益又は当期純損失（△）(単位)",
+      "type": "String",
+      "description": "財務情報の当期純利益又は当期純損失（△）の単位。",
+      "metadata_only": false
+    },
+    {
+      "no": 23,
+      "name": "資本金",
+      "type": "String",
+      "description": "財務情報の資本金。",
+      "metadata_only": false
+    },
+    {
+      "no": 24,
+      "name": "資本金(単位)",
+      "type": "String",
+      "description": "財務情報の資本金の単位。",
+      "metadata_only": false
+    },
+    {
+      "no": 25,
+      "name": "純資産額",
+      "type": "String",
+      "description": "財務情報の純資産額。",
+      "metadata_only": false
+    },
+    {
+      "no": 26,
+      "name": "純資産額(単位)",
+      "type": "String",
+      "description": "財務情報の純資産額の単位。",
+      "metadata_only": false
+    },
+    {
+      "no": 27,
+      "name": "総資産額",
+      "type": "String",
+      "description": "財務情報の総資産額。",
+      "metadata_only": false
+    },
+    {
+      "no": 28,
+      "name": "総資産額(単位)",
+      "type": "String",
+      "description": "財務情報の総資産額の単位。",
+      "metadata_only": false
+    },
+    {
+      "no": 29,
+      "name": "従業員数",
+      "type": "String",
+      "description": "財務情報の従業員数。",
+      "metadata_only": false
+    },
+    {
+      "no": 30,
+      "name": "従業員数(単位)",
+      "type": "String",
+      "description": "財務情報の従業員数の単位。",
+      "metadata_only": false
+    },
+    {
+      "no": 31,
+      "name": "大株主1",
+      "type": "String",
+      "description": "財務情報の大株主名。",
+      "metadata_only": false
+    },
+    {
+      "no": 32,
+      "name": "発行済株式総数に対する所有株式数の割合1",
+      "type": "String",
+      "description": "「大株主１」の発行済株式総数に対する所有株式数の割合。",
+      "metadata_only": false
+    },
+    {
+      "no": 33,
+      "name": "大株主2",
+      "type": "String",
+      "description": "財務情報の大株主名。",
+      "metadata_only": false
+    },
+    {
+      "no": 34,
+      "name": "発行済株式総数に対する所有株式数の割合2",
+      "type": "String",
+      "description": "「大株主2」の発行済株式総数に対する所有株式数の割合。",
+      "metadata_only": false
+    },
+    {
+      "no": 35,
+      "name": "大株主3",
+      "type": "String",
+      "description": "財務情報の大株主名。",
+      "metadata_only": false
+    },
+    {
+      "no": 36,
+      "name": "発行済株式総数に対する所有株式数の割合3",
+      "type": "String",
+      "description": "「大株主3」の発行済株式総数に対する所有株式数の割合。",
+      "metadata_only": false
+    },
+    {
+      "no": 37,
+      "name": "大株主4",
+      "type": "String",
+      "description": "財務情報の大株主名。",
+      "metadata_only": false
+    },
+    {
+      "no": 38,
+      "name": "発行済株式総数に対する所有株式数の割合4",
+      "type": "String",
+      "description": "「大株主4」の発行済株式総数に対する所有株式数の割合。",
+      "metadata_only": false
+    },
+    {
+      "no": 39,
+      "name": "大株主5",
+      "type": "String",
+      "description": "財務情報の大株主名。",
+      "metadata_only": false
+    },
+    {
+      "no": 40,
+      "name": "発行済株式総数に対する所有株式数の割合5",
+      "type": "String",
+      "description": "「大株主5」の発行済株式総数に対する所有株式数の割合。",
+      "metadata_only": false
+    },
+    {
+      "no": 41,
+      "name": "キー情報",
+      "type": "String",
+      "description": "Gビズインフォが付番する一意となる識別子を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 42,
+      "name": "データ品質",
+      "type": "String",
+      "description": "データの区分を以下のいずれかで示す。・政府承認データ・自己申告データ",
+      "metadata_only": true
+    },
+    {
+      "no": 43,
+      "name": "出典元",
+      "type": "String",
+      "description": "データを取得したシステム名称または行政庁名を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 44,
+      "name": "データ取込頻度",
+      "type": "String",
+      "description": "Gビズインフォへのデータ取込頻度を示す。・年次・月次・日次・半年毎",
+      "metadata_only": true
+    },
+    {
+      "no": 45,
+      "name": "最終取得日",
+      "type": "String",
+      "description": "データを外部システムから最後に取得した日付を示す。入力形式：YYYY-MM-DD（西暦-月-日）",
+      "metadata_only": true
+    },
+    {
+      "no": 46,
+      "name": "最終更新日",
+      "type": "String",
+      "description": "Gビズインフォ上でデータが最後に更新・修正された日付を示す。入力形式：YYYY-MM-DD（西暦-月-日）",
+      "metadata_only": true
+    }
+  ]
+}

@@ -1,0 +1,770 @@
+{
+  "source": "Gビズインフォ 基本情報 CSVファイル定義",
+  "note": "「キー情報」以降の項目は、ファイルダウンロード時に「メタデータを出力する」を選択した場合にのみ出力されます。",
+  "footnotes": {
+    "1": "国税庁発行データ（https://www.houjin-bangou.nta.go.jp/webapi/）",
+    "2": "金融庁発行データ（https://disclosure2.edinet-fsa.go.jp/）",
+    "3": "厚生労働省発行データ（https://shokuba.mhlw.go.jp/）",
+    "4": "デジタル庁 営業品目一覧（https://www.p-portal.go.jp/pps-web-biz/UZA01/OZA0101/）",
+    "5": "デジタル庁 別記５ 資格の種類別等級区分及び予定価格の範囲（https://www.chotatujoho.geps.go.jp/va/com/ShikakuTop.html）"
+  },
+  "fields": [
+    {
+      "no": 1,
+      "name": "法人番号",
+      "type": "String",
+      "description": "法人番号の指定を受けた者（以下「法人等」という。）の法人番号を示すデータ項目。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※1"
+    },
+    {
+      "no": 2,
+      "name": "商号または名称",
+      "type": "String",
+      "description": "法人等の商号又は名称を示すデータ項目。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※1"
+    },
+    {
+      "no": 3,
+      "name": "商号または名称（カナ）",
+      "type": "String",
+      "description": "法人等の商号又は名称を示すデータ項目。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※1"
+    },
+    {
+      "no": 4,
+      "name": "商号または名称（英字）",
+      "type": "String",
+      "description": "法人等の商号又は名称を示すデータ項目。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※1"
+    },
+    {
+      "no": 5,
+      "name": "登記記録の閉鎖等年月日",
+      "type": "String",
+      "description": "登記記録の閉鎖等の事由が生じた年月日を表す。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※1"
+    },
+    {
+      "no": 6,
+      "name": "登記記録の閉鎖等の事由",
+      "type": "String",
+      "description": "閉鎖の事由は、登記記録の閉鎖等が生じた事由を表すデータ項目。",
+      "metadata_only": false,
+      "codes": [
+        {"code": "01", "name": "清算の結了等", "description": "設立登記法人について、清算の結了等により登記記録が閉鎖された事を意味する。"},
+        {"code": "11", "name": "合併による解散等", "description": "設立登記法人について、合併による解散等により登記記録が閉鎖された事を意味する。"},
+        {"code": "21", "name": "登記官による閉鎖", "description": "設立登記法人について、商業登記規則第81条により登記記録の閉鎖された事を意味する。"},
+        {"code": "31", "name": "その他の清算の結了等", "description": "設立登記法人以外について、清算の結了等に類する事由が生じた場合に表示する。"}
+      ],
+      "note": "※1"
+    },
+    {
+      "no": 7,
+      "name": "登記住所",
+      "type": "String",
+      "description": "法人等の本店又は主たる事務所の所在地。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※1"
+    },
+    {
+      "no": 8,
+      "name": "郵便番号",
+      "type": "String",
+      "description": "国内所在地の文字情報を基に設定した郵便番号。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※1"
+    },
+    {
+      "no": 9,
+      "name": "都道府県",
+      "type": "String",
+      "description": "法人等の本店又は主たる事務所の所在地の都道府県名。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※1"
+    },
+    {
+      "no": 10,
+      "name": "都道府県コード",
+      "type": "String",
+      "description": "JIS X 0401 に準ずる都道府県コード。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※1"
+    },
+    {
+      "no": 11,
+      "name": "市区町村（郡）",
+      "type": "String",
+      "description": "法人等の本店又は主たる事務所の所在地の市区町村名。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※1"
+    },
+    {
+      "no": 12,
+      "name": "市区町村コード",
+      "type": "String",
+      "description": "JIS X 0402 に準ずる市区町村コード。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※1"
+    },
+    {
+      "no": 13,
+      "name": "番地以下",
+      "type": "String",
+      "description": "法人等の本店又は主たる事務所の所在地の丁目番地等。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※1"
+    },
+    {
+      "no": 14,
+      "name": "組織種別",
+      "type": "String",
+      "description": "法人種別を判別するためのデータ項目。",
+      "metadata_only": false,
+      "codes": [
+        {"code": "101", "name": "国の機関", "description": "行政機関、裁判所及び国会の機関に係る情報。"},
+        {"code": "201", "name": "地方公共団体", "description": "地方自治法第１条の３において定義されている普通地方公共団体及び特別地方公共団体に係る情報。"},
+        {"code": "301", "name": "株式会社"},
+        {"code": "302", "name": "有限会社", "description": "特例有限会社の情報。"},
+        {"code": "303", "name": "合名会社"},
+        {"code": "304", "name": "合資会社"},
+        {"code": "305", "name": "合同会社"},
+        {"code": "399", "name": "その他の設立登記法人"},
+        {"code": "401", "name": "外国会社等"},
+        {"code": "499", "name": "その他"}
+      ],
+      "note": "※1"
+    },
+    {
+      "no": 15,
+      "name": "処理区分",
+      "type": "String",
+      "description": "法人番号の指定、商号又は所在地に変更等が発生した事由をコード値で表す項目。",
+      "metadata_only": false,
+      "codes": [
+        {"code": "01", "name": "新規", "description": "新たに法人番号が指定されたことを表す。"},
+        {"code": "11", "name": "商号又は名称の変更"},
+        {"code": "12", "name": "国内所在地の変更"},
+        {"code": "13", "name": "国外所在地の変更"},
+        {"code": "21", "name": "登記記録の閉鎖等"},
+        {"code": "22", "name": "登記記録の復活等"},
+        {"code": "71", "name": "吸収合併"},
+        {"code": "72", "name": "吸収合併無効"},
+        {"code": "81", "name": "商号の登記の抹消"},
+        {"code": "99", "name": "削除"}
+      ],
+      "note": "※1"
+    },
+    {
+      "no": 16,
+      "name": "訂正区分",
+      "type": "String",
+      "description": "提供していたデータについて、訂正が生じた場合などに値を設定するデータ項目。",
+      "metadata_only": false,
+      "codes": [
+        {"code": "0", "name": "訂正以外"},
+        {"code": "1", "name": "訂正"}
+      ],
+      "note": "※1"
+    },
+    {
+      "no": 17,
+      "name": "状態",
+      "type": "String",
+      "description": "処理区分が\"21\"の場合、\"閉鎖\"を出力。それ以外の場合は\"\"を出力。",
+      "metadata_only": false,
+      "codes": null
+    },
+    {
+      "no": 18,
+      "name": "代表者名称",
+      "type": "String",
+      "description": "法人等の代表者役職氏名。",
+      "metadata_only": false,
+      "codes": null
+    },
+    {
+      "no": 19,
+      "name": "資本金",
+      "type": "String",
+      "description": "法人等の資本金。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※2"
+    },
+    {
+      "no": 20,
+      "name": "従業員数",
+      "type": "String",
+      "description": "法人等の従業員数。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※3"
+    },
+    {
+      "no": 21,
+      "name": "企業規模詳細(男性)",
+      "type": "String",
+      "description": "法人等の従業員数の内、男性が占める人数。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※3"
+    },
+    {
+      "no": 22,
+      "name": "企業規模詳細(女性)",
+      "type": "String",
+      "description": "法人等の従業員数の内、女性が占める人数。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※3"
+    },
+    {
+      "no": 23,
+      "name": "事業概要",
+      "type": "String",
+      "description": "法人等の事業概要。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※3"
+    },
+    {
+      "no": 24,
+      "name": "WebサイトURL",
+      "type": "String",
+      "description": "法人等の企業ホームページ。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※3"
+    },
+    {
+      "no": 25,
+      "name": "創業年",
+      "type": "String",
+      "description": "法人等の創業年。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※3"
+    },
+    {
+      "no": 26,
+      "name": "事業種目",
+      "type": "String",
+      "description": "法人等の事業種目。複数の値を持つ場合、「|」区切りで出力。（総務省-日本標準産業分類）",
+      "metadata_only": false,
+      "codes": null
+    },
+    {
+      "no": 27,
+      "name": "設立年月日",
+      "type": "String",
+      "description": "法人等の設立年月日。",
+      "metadata_only": false,
+      "codes": null
+    },
+    {
+      "no": 28,
+      "name": "全省庁統一資格-資格等級",
+      "type": "String",
+      "description": "該当資格者の営業品目。保有している営業品目コードをすべて全角カンマ区切りで出力する。複数の値を持つ場合、「|」区切りで出力。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※4"
+    },
+    {
+      "no": 29,
+      "name": "全省庁統一資格-営業品目",
+      "type": "String",
+      "description": "全省庁統一資格の資格等級。格納データは\"X|X|X|X\"となり、物品の製造/物品の販売/役務の提供等/物品の買受けの順に対応。「|」区切りで出力。",
+      "metadata_only": false,
+      "codes": null,
+      "note": "※5"
+    },
+    {
+      "no": 30,
+      "name": "更新年月日",
+      "type": "String",
+      "description": "法務省等からデータを受け取り、国税庁でデータを更新した日付を表す。",
+      "metadata_only": false,
+      "codes": null
+    },
+    {
+      "no": 31,
+      "name": "キー情報",
+      "type": "String",
+      "description": "Gビズインフォが付番する一意となる識別子を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 32,
+      "name": "データ品質",
+      "type": "String",
+      "description": "通番34~45の項目において個別にデータ品質を定義しているカラム以外のカラムのデータ品質を示す。・政府承認データ・自己申告データ",
+      "metadata_only": true
+    },
+    {
+      "no": 33,
+      "name": "データ品質-代表者名称",
+      "type": "String",
+      "description": "「代表者名称」のデータ品質を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 34,
+      "name": "データ品質-資本金",
+      "type": "String",
+      "description": "「資本金」のデータ品質を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 35,
+      "name": "データ品質-従業員数",
+      "type": "String",
+      "description": "「従業員数」のデータ品質を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 36,
+      "name": "データ品質-企業規模詳細(男性)",
+      "type": "String",
+      "description": "「企業規模詳細(男性)」のデータ品質を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 37,
+      "name": "データ品質-企業規模詳細(女性)",
+      "type": "String",
+      "description": "「企業規模詳細(女性)」のデータ品質を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 38,
+      "name": "データ品質-事業概要",
+      "type": "String",
+      "description": "「事業概要」のデータ品質を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 39,
+      "name": "データ品質-WebサイトURL",
+      "type": "String",
+      "description": "「WebサイトURL」のデータ品質を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 40,
+      "name": "データ品質-創業年",
+      "type": "String",
+      "description": "「創業年」のデータ品質を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 41,
+      "name": "データ品質-事業種目",
+      "type": "String",
+      "description": "「事業種目」のデータ品質を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 42,
+      "name": "データ品質-設立年月日",
+      "type": "String",
+      "description": "「設立年月日」のデータ品質を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 43,
+      "name": "データ品質-全省庁統一資格-資格等級",
+      "type": "String",
+      "description": "「全省庁統一資格-資格等級」のデータ品質を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 44,
+      "name": "データ品質-全省庁統一資格-営業品目",
+      "type": "String",
+      "description": "「全省庁統一資格-営業品目」のデータ品質を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 45,
+      "name": "出典元",
+      "type": "String",
+      "description": "通番47~58の項目において個別に出典元を定義しているカラム以外のカラムの出典元を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 46,
+      "name": "出典元-代表者名称",
+      "type": "String",
+      "description": "「代表者名称」の出典元を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 47,
+      "name": "出典元-資本金",
+      "type": "String",
+      "description": "「資本金」の出典元を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 48,
+      "name": "出典元-従業員数",
+      "type": "String",
+      "description": "「従業員数」の出典元を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 49,
+      "name": "出典元-企業規模詳細(男性)",
+      "type": "String",
+      "description": "「企業規模詳細(男性)」の出典元を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 50,
+      "name": "出典元-企業規模詳細(女性)",
+      "type": "String",
+      "description": "「企業規模詳細(女性)」の出典元を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 51,
+      "name": "出典元-事業概要",
+      "type": "String",
+      "description": "「事業概要」の出典元を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 52,
+      "name": "出典元-WebサイトURL",
+      "type": "String",
+      "description": "「WebサイトURL」の出典元を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 53,
+      "name": "出典元-創業年",
+      "type": "String",
+      "description": "「創業年」の出典元を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 54,
+      "name": "出典元-事業種目",
+      "type": "String",
+      "description": "「事業種目」の出典元を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 55,
+      "name": "出典元-設立年月日",
+      "type": "String",
+      "description": "「設立年月日」の出典元を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 56,
+      "name": "出典元-全省庁統一資格-資格等級",
+      "type": "String",
+      "description": "「全省庁統一資格-資格等級」の出典元を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 57,
+      "name": "出典元-全省庁統一資格-営業品目",
+      "type": "String",
+      "description": "「全省庁統一資格-営業品目」の出典元を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 58,
+      "name": "データ取込頻度",
+      "type": "String",
+      "description": "通番60~71の項目において個別にデータ取込頻度を定義しているカラム以外のカラムのデータ取込頻度を示す。・年次・月次・日次・半年毎",
+      "metadata_only": true
+    },
+    {
+      "no": 59,
+      "name": "データ取込頻度-代表者名称",
+      "type": "String",
+      "description": "「代表者名称」のデータ取込頻度を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 60,
+      "name": "データ取込頻度-資本金",
+      "type": "String",
+      "description": "「資本金」のデータ取込頻度を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 61,
+      "name": "データ取込頻度-従業員数",
+      "type": "String",
+      "description": "「従業員数」のデータ取込頻度を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 62,
+      "name": "データ取込頻度-企業規模詳細(男性)",
+      "type": "String",
+      "description": "「企業規模詳細(男性)」のデータ取込頻度を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 63,
+      "name": "データ取込頻度-企業規模詳細(女性)",
+      "type": "String",
+      "description": "「企業規模詳細(女性)」のデータ取込頻度を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 64,
+      "name": "データ取込頻度-事業概要",
+      "type": "String",
+      "description": "「事業概要」のデータ取込頻度を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 65,
+      "name": "データ取込頻度-WebサイトURL",
+      "type": "String",
+      "description": "「WebサイトURL」のデータ取込頻度を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 66,
+      "name": "データ取込頻度-創業年",
+      "type": "String",
+      "description": "「創業年」のデータ取込頻度を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 67,
+      "name": "データ取込頻度-事業種目",
+      "type": "String",
+      "description": "「事業種目」のデータ取込頻度を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 68,
+      "name": "データ取込頻度-設立年月日",
+      "type": "String",
+      "description": "「設立年月日」のデータ取込頻度を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 69,
+      "name": "データ取込頻度-全省庁統一資格-資格等級",
+      "type": "String",
+      "description": "「全省庁統一資格-資格等級」のデータ取込頻度を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 70,
+      "name": "データ取込頻度-全省庁統一資格-営業品目",
+      "type": "String",
+      "description": "「全省庁統一資格-営業品目」のデータ取込頻度を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 71,
+      "name": "最終取得日",
+      "type": "String",
+      "description": "通番73~84の項目において個別に最終取得日を定義しているカラム以外のカラムの最終取得日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 72,
+      "name": "最終取得日-代表者名称",
+      "type": "String",
+      "description": "「代表者名称」の最終取得日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 73,
+      "name": "最終取得日-資本金",
+      "type": "String",
+      "description": "「資本金」の最終取得日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 74,
+      "name": "最終取得日-従業員数",
+      "type": "String",
+      "description": "「従業員数」の最終取得日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 75,
+      "name": "最終取得日-企業規模詳細(男性)",
+      "type": "String",
+      "description": "「企業規模詳細(男性)」の最終取得日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 76,
+      "name": "最終取得日-企業規模詳細(女性)",
+      "type": "String",
+      "description": "「企業規模詳細(女性)」の最終取得日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 77,
+      "name": "最終取得日-事業概要",
+      "type": "String",
+      "description": "「事業概要」の最終取得日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 78,
+      "name": "最終取得日-WebサイトURL",
+      "type": "String",
+      "description": "「WebサイトURL」の最終取得日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 79,
+      "name": "最終取得日-創業年",
+      "type": "String",
+      "description": "「創業年」の最終取得日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 80,
+      "name": "最終取得日-事業種目",
+      "type": "String",
+      "description": "「事業種目」の最終取得日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 81,
+      "name": "最終取得日-設立年月日",
+      "type": "String",
+      "description": "「設立年月日」の最終取得日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 82,
+      "name": "最終取得日-全省庁統一資格-資格等級",
+      "type": "String",
+      "description": "「全省庁統一資格-資格等級」の最終取得日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 83,
+      "name": "最終取得日-全省庁統一資格-営業品目",
+      "type": "String",
+      "description": "「全省庁統一資格-営業品目」の最終取得日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 84,
+      "name": "最終更新日",
+      "type": "String",
+      "description": "通番73~84の項目において個別に最終更新日を定義しているカラム以外のカラムの最終更新日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 85,
+      "name": "最終更新日-代表者名称",
+      "type": "String",
+      "description": "「代表者名称」の最終更新日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 86,
+      "name": "最終更新日-資本金",
+      "type": "String",
+      "description": "「資本金」の最終更新日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 87,
+      "name": "最終更新日-従業員数",
+      "type": "String",
+      "description": "「従業員数」の最終更新日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 88,
+      "name": "最終更新日-企業規模詳細(男性)",
+      "type": "String",
+      "description": "「企業規模詳細(男性)」の最終更新日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 89,
+      "name": "最終更新日-企業規模詳細(女性)",
+      "type": "String",
+      "description": "「企業規模詳細(女性)」の最終更新日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 90,
+      "name": "最終更新日-事業概要",
+      "type": "String",
+      "description": "「事業概要」の最終更新日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 91,
+      "name": "最終更新日-WebサイトURL",
+      "type": "String",
+      "description": "「WebサイトURL」の最終更新日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 92,
+      "name": "最終更新日-創業年",
+      "type": "String",
+      "description": "「創業年」の最終更新日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 93,
+      "name": "最終更新日-事業種目",
+      "type": "String",
+      "description": "「事業種目」の最終更新日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 94,
+      "name": "最終更新日-設立年月日",
+      "type": "String",
+      "description": "「設立年月日」の最終更新日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 95,
+      "name": "最終更新日-全省庁統一資格-資格等級",
+      "type": "String",
+      "description": "「全省庁統一資格-資格等級」の最終更新日を示す。",
+      "metadata_only": true
+    },
+    {
+      "no": 96,
+      "name": "最終更新日-全省庁統一資格-営業品目",
+      "type": "String",
+      "description": "「全省庁統一資格-営業品目」の最終更新日を示す。",
+      "metadata_only": true
+    }
+  ]
+}
