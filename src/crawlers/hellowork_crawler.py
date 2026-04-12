@@ -284,26 +284,38 @@ def search(
         if not filter_prefecture(driver, district_no, prefecture_code):
             return False
 
-    # 検索
-    try:
-        search_btn = WebDriverWait(driver, DEFAULT_TIMEOUT).until(
-            EC.element_to_be_clickable((By.ID, "ID_searchBtn"))
-        )
-        search_btn.click()
-        time.sleep(WAIT_BETWEEN_PAGES)
-    except (NoSuchElementException, ElementClickInterceptedException, TimeoutException):
-        logger.error("検索ボタンが見つかりません")
-        return False
+    # 検索（失敗時は最大2回リトライ）
+    for attempt in range(3):
+        try:
+            search_btn = WebDriverWait(driver, DEFAULT_TIMEOUT).until(
+                EC.element_to_be_clickable((By.ID, "ID_searchBtn"))
+            )
+            search_btn.click()
+            time.sleep(WAIT_BETWEEN_PAGES + random.uniform(0, 1))
+            break
+        except (NoSuchElementException, ElementClickInterceptedException, TimeoutException):
+            if attempt < 2:
+                logger.warning("検索ボタンが見つかりません (試行 %d/3)、ページを再読み込みします", attempt + 1)
+                driver.get(BASE_URL)
+                if not filter_kyujintype(driver, kyujintype):
+                    return []
+                if kyujintype == 1:
+                    if not filter_prefecture(driver, district_no, prefecture_code):
+                        return []
+                time.sleep(random.uniform(2, 4))
+            else:
+                logger.error("検索ボタンが見つかりません (3回試行後にスキップ)")
+                return []
 
-    # 表示件数を50件に変更
+    # 表示件数を50件に変更（0件の場合はセレクトボックスが存在しないため空リストを返す）
     try:
         _wait_for(driver, By.ID, "ID_fwListNaviDispTop")
         select_display = driver.find_element(By.ID, "ID_fwListNaviDispTop")
         select = Select(select_display)
         select.select_by_visible_text("50件")
-    except NoSuchElementException:
-        logger.warning("表示件数セレクトボックスが見つかりません")
-        return False
+    except (NoSuchElementException, TimeoutException):
+        logger.info("表示件数セレクトボックスが見つかりません（検索結果0件の可能性）")
+        return []
     
     # 求人番号を抽出（対象日付以外は除外）
     l_jobnumbers = scrape_jobnumber(driver, target_date, kyujintype)
@@ -427,7 +439,8 @@ def crawl(
                         continue
                     logger.info("開始 - 地域: %s, 都道府県: %s", district, prefecture)
                     l_jobnumber = search(driver, kyujintype=i, district_no=j, prefecture_code=k, target_date=target_date)
-                    l_jobnumbers.extend(l_jobnumber)
+                    if l_jobnumber:
+                        l_jobnumbers.extend(l_jobnumber)
         else:
             if os.path.exists(os.path.join(TEMP_CSV_DIR, "jobnumber_{}.csv".format(i))):
                 logger.info("スキップ - 既にCSVが存在: %s", kind)
@@ -439,7 +452,8 @@ def crawl(
                 continue
             # 一般求人以外は都道府県絞り込みなし（district_no/prefecture_code は未使用）
             l_jobnumber = search(driver, kyujintype=i, district_no=0, prefecture_code=0, target_date=target_date)
-            l_jobnumbers.extend(l_jobnumber)
+            if l_jobnumber:
+                l_jobnumbers.extend(l_jobnumber)
     # 重複を除いて求人番号のリストを作成&CSVに保存（job_number + kyujintype）
     df = pd.DataFrame(l_jobnumbers).drop_duplicates(subset="job_number").reset_index(drop=True)
     df.to_csv(f"{OUTPUT_CSV_DIR}/jobnumbers_{today}.csv", index=False)

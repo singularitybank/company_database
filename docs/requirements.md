@@ -17,6 +17,7 @@
   - 国税庁 法人番号公表サイト（法人番号・基本情報）
   - gBizInfo（経済産業省）（財務・特許・調達・認定情報）
   - 職場情報総合サイト・しょくばらぼ（厚生労働省）（労働環境・雇用情報）
+  - ハローワークインターネットサービス（厚生労働省）（求人情報・日次）
 - **対象企業:** 国内法人全般（法人番号を持つ法人）
 - **開発規模:** 個人開発（一人）
 
@@ -31,22 +32,25 @@
 
 ```
 [データ収集層]
-  ├── 国税庁API (法人番号公表API)
-  ├── gBizInfo API
-  ├── Selenium/requests スクレイピング（職場情報等）
-  └── スケジューラー（自動更新）
+  ├── 国税庁 全件CSVダウンロード + 差分API
+  ├── gBizInfo 全件CSVダウンロード + 差分API
+  ├── しょくばらぼ 全件CSVダウンロード（一括）
+  └── ハローワークインターネットサービス Seleniumクローリング（日次）
 
-[データ処理層]
-  ├── 名寄せ・重複排除
-  ├── データ正規化・クレンジング
-  └── 差分検出（新設・変更・閉鎖）
+[データ処理層（Parquetステージング）]
+  ├── 生データ（CSV/JSON/HTML）→ Parquet変換
+  ├── 差分検出（新設・変更・閉鎖）
+  └── Parquet → SQLite ロード
 
 [データ格納層]
-  └── SQLiteデータベース（初期）→ PostgreSQL（将来拡張）
+  ├── data/companies.db  （国税庁：法人基本情報・変更履歴）
+  ├── data/gbizinfo.db   （gBizInfo：財務・特許・補助金・認定等）
+  └── data/shokuba.db    （しょくばらぼ：労働環境情報）
+  ※ ハローワーク求人情報は Parquet のみ蓄積（SQLite未導入）
 
 [利用層]
   ├── Pythonスクリプトによる直接クエリ
-  └── CSVエクスポート
+  └── CSVエクスポート（未実装）
 ```
 
 ---
@@ -81,13 +85,32 @@
 | company_url | 企業URL | API |
 | certification_info | 認定・表彰情報 | API |
 
-#### 労働環境情報（職場情報総合サイト）
+#### 労働環境情報（しょくばらぼ）
+全件CSVを8テーブルに分割してロードする（636列）。
+
+| テーブル名 | 概要 | 列数目安 |
+|---|---|---|
+| shokuba_basic | 基本情報・就業場所 | 39列 |
+| shokuba_recruitment | 採用・定着・インターン・社会保険 | 84列 |
+| shokuba_work_hours | 残業・有給・テレワーク | 135列 |
+| shokuba_employment_system | 多様な正社員制度・転換実績・定年制 | 132列 |
+| shokuba_female_workforce | 女性労働者割合・管理職・役員 | 28列 |
+| shokuba_childcare | 育児休業・両立支援 | 56列 |
+| shokuba_career | キャリア開発・行動計画 | 25列 |
+| shokuba_certification | 認定・表彰 | 137列 |
+
+#### ハローワーク求人情報
 | フィールド名 | 説明 | 取得方法 |
 |---|---|---|
-| avg_work_hours | 平均残業時間 | スクレイピング |
-| paid_leave_rate | 有給取得率 | スクレイピング |
-| female_manager_ratio | 女性管理職比率 | スクレイピング |
-| new_graduate_retention | 新卒3年後定着率 | スクレイピング |
+| job_number | 求人番号 | クローリング |
+| company_name | 事業所名 | クローリング |
+| corporate_number | 法人番号 | クローリング |
+| job_title | 職種 | クローリング |
+| employment_type | 雇用形態 | クローリング |
+| wage / base_salary | 賃金・基本給 | クローリング |
+| work_hours | 就業時間 | クローリング |
+| annual_holidays | 年間休日数 | クローリング |
+| （他210列超） | 求人票の全項目 | クローリング |
 
 ### 3.2 データ量見積もり
 - 国内法人番号登録数：約600万件（アクティブ法人は約300万件）
@@ -109,17 +132,24 @@
 - gBizInfo RESTful APIを使い、法人番号をキーに財務・雇用情報を取得する
 - APIレート制限（利用規約に準拠）を遵守するためのウェイト制御を実装する
 
-#### FR-03: 職場情報スクレイピング
-- しょくばらぼ（`https://shokuba.mhlw.go.jp`）から労働環境情報を取得する
-- Selenium（またはrequests + BeautifulSoup）で実装する
+#### FR-03: しょくばらぼ 全件CSVダウンロード
+- しょくばらぼ（`https://shokuba.mhlw.go.jp`）の全件CSVを取得する
+- Selenium（Microsoft Edge）でダウンロードし、Parquet変換後にSQLiteへロードする
 - robots.txtおよびサイト利用規約を遵守する
 
-#### FR-04: 定期自動更新
-- スケジューラー（APScheduler または Windowsタスクスケジューラー）による自動実行
+#### FR-04a: ハローワーク求人情報収集（日次）
+- ハローワークインターネットサービスから当日公開の求人情報をSeleniumでクロールする
+- 処理フロー: 求人番号収集 → 詳細HTMLダウンロード → Parquet変換
+- 実行単位: 日次（Windowsタスクスケジューラーで自動実行）
+- 取得ファイル: `data/staging/hellowork_YYYYMMDD.parquet`
+
+#### FR-04b: 定期自動更新
+- Windowsタスクスケジューラーによる自動実行（APSchedulerは不採用）
 - 更新頻度：
-  - 基本情報（法人番号差分）: 週1回
+  - 法人基本情報（NTA差分）: 週1回
   - gBizInfo: 月1回
-  - 職場情報: 月1回
+  - 職場情報（しょくばらぼ）: 月1回
+  - ハローワーク求人情報: 毎日
 
 ### 4.2 差分検出・変更管理機能
 
@@ -173,97 +203,92 @@
 |---|---|---|
 | 言語 | Python 3.13+ | データ処理・スクレイピングのエコシステムが充実 |
 | DB | SQLite（初期）| 個人開発・ローカル運用に最適、依存なし |
-| ORM/クエリ | SQLAlchemy + pandas | 柔軟なデータ操作 |
-| API通信 | requests / httpx | HTTPクライアント |
-| スクレイピング | Selenium + BeautifulSoup | JavaScript依存サイト対応 |
-| スケジューラー | APScheduler | Pythonのみで完結するスケジューリング |
+| 中間ストア | Apache Parquet（PyArrow） | 型保持・高速な列指向フォーマット |
+| ORM/クエリ | pandas + sqlite3 | 柔軟なデータ操作（SQLAlchemyは不採用） |
+| API通信 | requests | HTTPクライアント |
+| スクレイピング | Selenium（Microsoft Edge） | JavaScript依存サイト対応 |
+| スケジューラー | Windowsタスクスケジューラー | 追加依存なし・OS標準機能（APSchedulerは不採用） |
 | 設定管理 | python-dotenv | 環境変数・APIキー管理 |
 | ログ | logging（標準ライブラリ） | 追加依存なし |
 | バージョン管理 | Git / GitHub | ソース管理 |
 
 ---
 
-## 7. ディレクトリ構成（案）
+## 7. ディレクトリ構成
 
 ```
 company_database/
 ├── config/
-│   ├── .env                  # APIキー等（gitignore対象）
-│   └── config.yaml           # 設定値
+│   ├── .env                        # APIキー等（gitignore対象）
+│   └── config.yaml                 # 設定値（パス・タイミング等）
 ├── src/
-│   ├── collectors/
-│   │   ├── nta_collector.py       # 国税庁API
-│   │   ├── gbizinfo_collector.py  # gBizInfo API
-│   │   └── mhlw_scraper.py        # 職場情報スクレイピング
-│   ├── processors/
-│   │   ├── normalizer.py          # データ正規化
-│   │   ├── deduplicator.py        # 重複排除
-│   │   └── diff_detector.py       # 差分検出
-│   ├── models/
-│   │   └── schema.py              # DBスキーマ定義
-│   ├── exporters/
-│   │   └── csv_exporter.py        # CSVエクスポート
-│   └── scheduler.py               # 定期実行スケジューラー
+│   ├── config.py                   # 設定の一元管理
+│   ├── logging_setup.py            # ログ設定
+│   ├── extractors/                 # 差分データ収集（NTA・gBizInfo）
+│   ├── downloaders/                # 全件ダウンロード（しょくばらぼ）
+│   ├── crawlers/                   # Seleniumクローラー（ハローワーク）
+│   ├── parsers/                    # HTMLパーサー（ハローワーク）
+│   ├── converters/                 # 生データ → Parquet 変換
+│   ├── loaders/                    # Parquet → SQLite ロード
+│   ├── models/                     # DBスキーマ定義（NTA用）
+│   ├── processors/                 # 差分検出
+│   └── utils/                      # 共通ユーティリティ
+├── scripts/                        # 実行エントリーポイント
+│   ├── run_nta.py                  # NTA 全件取込
+│   ├── run_nta_diff.py             # NTA 差分更新
+│   ├── run_gbizinfo_diff.py        # gBizInfo 差分更新
+│   ├── run_shokuba.py              # しょくばらぼ 全件取込
+│   └── run_hellowork.py            # ハローワーク 日次取得
 ├── data/
-│   ├── raw/                  # 取得した生データ（一時保存）
-│   └── company.db            # SQLiteデータベース
-├── logs/                     # 実行ログ
+│   ├── companies.db                # SQLite: NTA法人基本情報
+│   ├── gbizinfo.db                 # SQLite: gBizInfo詳細情報
+│   ├── shokuba.db                  # SQLite: 職場情報
+│   ├── raw/                        # 生データ（CSV/JSON）
+│   │   ├── nta/
+│   │   ├── gbizinfo/
+│   │   └── shokuba/
+│   └── staging/                    # Parquet中間ストア
+│       ├── nta_YYYYMMDD.parquet
+│       ├── gbizinfo_*.parquet
+│       ├── shokuba_*.parquet
+│       └── hellowork_YYYYMMDD.parquet
+├── logs/                           # 実行ログ（日付別）
 ├── docs/
-│   └── requirements.md       # 本ドキュメント
-├── tests/                    # テストコード
-├── requirements.txt
-└── README.md
+│   ├── requirements.md             # 本ドキュメント
+│   ├── nta.md                      # NTA 詳細仕様
+│   ├── gbizinfo.md                 # gBizInfo 詳細仕様
+│   ├── shokuba.md                  # しょくばらぼ 詳細仕様
+│   └── hellowork.md                # ハローワーク 詳細仕様
+├── tests/
+├── CLAUDE.md
+└── requirements.txt
 ```
 
 ---
 
 ## 8. DBスキーマ（主要テーブル）
 
-### companies（法人基本情報）
-```sql
-CREATE TABLE companies (
-    corporate_number TEXT PRIMARY KEY,  -- 法人番号（13桁）
-    name             TEXT NOT NULL,
-    name_kana        TEXT,
-    postal_code      TEXT,
-    prefecture_name  TEXT,
-    city_name        TEXT,
-    street_number    TEXT,
-    status           TEXT,              -- 'active' / 'closed'
-    close_date       DATE,
-    close_cause      TEXT,
-    created_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at       DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
+DBはデータソース単位で3ファイルに分離している。法人番号（`corporate_number`）を共通キーとして横断クエリが可能。統合DBへの移行は将来課題。
 
-### company_details（gBizInfo詳細情報）
-```sql
-CREATE TABLE company_details (
-    corporate_number  TEXT PRIMARY KEY REFERENCES companies(corporate_number),
-    employee_number   INTEGER,
-    capital_amount    BIGINT,
-    net_sales         BIGINT,
-    business_category TEXT,
-    establishment_date DATE,
-    company_url       TEXT,
-    fetched_at        DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
+### data/companies.db（国税庁 法人基本情報）
 
-### workplace_info（職場情報）
-```sql
-CREATE TABLE workplace_info (
-    corporate_number      TEXT PRIMARY KEY REFERENCES companies(corporate_number),
-    avg_work_hours        REAL,
-    paid_leave_rate       REAL,
-    female_manager_ratio  REAL,
-    new_graduate_retention REAL,
-    fetched_at            DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-```
+#### companies
+国税庁全件CSVの全30フィールドをそのまま格納する（フィールド名はAPIの camelCase を snake_case に変換）。
 
-### change_history（変更履歴）
+| 主要カラム | 説明 |
+|---|---|
+| `corporate_number` | 法人番号（13桁）PRIMARY KEY |
+| `name` / `furigana` | 法人名・フリガナ |
+| `kind` | 法人種別コード |
+| `prefecture_name` / `city_name` / `street_number` | 所在地 |
+| `close_date` / `close_cause` | 閉鎖日・閉鎖事由 |
+| `update_date` | 最終更新日 |
+| `en_name` / `en_prefecture_name` 等 | 英語表記 |
+| `loaded_at` | DBロード日時 |
+
+#### change_history
+差分更新時に変更されたフィールドを記録する。
+
 ```sql
 CREATE TABLE change_history (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -271,27 +296,71 @@ CREATE TABLE change_history (
     field_name       TEXT NOT NULL,
     old_value        TEXT,
     new_value        TEXT,
-    changed_at       DATETIME DEFAULT CURRENT_TIMESTAMP
+    changed_at       TEXT NOT NULL
 );
 ```
+
+---
+
+### data/gbizinfo.db（gBizInfo 詳細情報）
+
+Parquetスキーマから DDL を自動生成するため、カラム定義はスキーマファイルが正。
+
+| テーブル名 | 内容 |
+|---|---|
+| `gbiz_companies` | 法人基本情報（`corporate_number` で UPSERT） |
+| `gbiz_financial` | 財務情報 |
+| `gbiz_financial_statement` | 決算情報 |
+| `gbiz_patent` | 特許情報 |
+| `gbiz_subsidy` | 補助金情報 |
+| `gbiz_procurement` | 調達情報 |
+| `gbiz_commendation` | 表彰情報 |
+| `gbiz_workplace` | 職場情報（gBizInfo版） |
+| `gbiz_certification` | 届出・認定情報 |
+| `gbiz_*_meta` | 各テーブルのメタ情報（JSON） |
+
+---
+
+### data/shokuba.db（しょくばらぼ 職場情報）
+
+全件CSV（636列）を8テーブルに分割してロード。スキーマはParquetから自動生成。全テーブルに `corporate_number` インデックスあり。更新戦略は全件入れ替え（差分APIなし）。
+
+| テーブル名 | 内容 |
+|---|---|
+| `shokuba_basic` | 基本情報・就業場所 |
+| `shokuba_recruitment` | 採用・定着・社会保険 |
+| `shokuba_work_hours` | 残業・有給・テレワーク |
+| `shokuba_employment_system` | 多様な正社員制度・定年制 |
+| `shokuba_female_workforce` | 女性労働者・管理職割合 |
+| `shokuba_childcare` | 育児休業・両立支援 |
+| `shokuba_career` | キャリア開発・行動計画 |
+| `shokuba_certification` | 認定・表彰 |
+
+---
+
+### ハローワーク求人情報（Parquetのみ）
+
+日次クロールの結果は `data/staging/hellowork_YYYYMMDD.parquet` に蓄積する。SQLiteへのロードは未実装。`corporate_number` で companies.db と JOIN 可能。
 
 ---
 
 ## 9. 開発フェーズ計画
 
 ### Phase 1: 基盤構築（MVP）
-- [ ] DBスキーマ設計・作成
-- [ ] 国税庁API / 全件CSVによる基本情報取得・格納
-- [ ] gBizInfo APIによる詳細情報取得・格納
-- [ ] ログ機能の実装
+- ✅ DBスキーマ設計・作成
+- ✅ 国税庁 全件CSVによる基本情報取得・格納
+- ✅ gBizInfo 全件CSVによる詳細情報取得・格納
+- ✅ ログ機能の実装
 
 ### Phase 2: 自動化
-- [ ] 差分検出・変更履歴記録の実装
-- [ ] 定期スケジューラーの実装
-- [ ] エラーハンドリング・リトライ機能の実装
+- ✅ 差分検出・変更履歴記録の実装（NTA・gBizInfo）
+- ✅ Windowsタスクスケジューラーによる自動実行
+- ✅ エラーハンドリング・リトライ機能の実装
 
 ### Phase 3: データ拡充
-- [ ] 職場情報スクレイピングの実装
+- ✅ しょくばらぼ 全件CSV取込の実装
+- ✅ ハローワーク求人情報 日次クロールの実装（追加データソース）
+- [ ] ハローワーク求人情報の SQLite ロード
 - [ ] CSVエクスポート機能の実装
 - [ ] データクレンジングの強化
 

@@ -23,13 +23,13 @@
 ```
 【初回フルロード】
 国税庁サイト
-  └─ 全件ダウンロードCSV (data/raw/*.csv)
+  └─ 全件ダウンロードCSV (data/raw/nta/*.csv)
         │
-        │ nta_collector.py: convert_raw_to_staging()
+        │ nta_to_parquet.py: convert_raw_to_staging()
         ▼
   Parquet (data/staging/nta_YYYYMMDD.parquet)
         │
-        │ nta_collector.py: load_to_db()
+        │ nta_to_sqlite.py: load_to_db()
         ▼
   companies テーブル（全件DELETE → INSERT）
 
@@ -52,26 +52,33 @@
 
 ### 事前準備
 
-1. 国税庁サイトから全件CSVをダウンロードして `data/raw/` に配置する  
+1. 国税庁サイトから全件CSVをダウンロードして `data/raw/nta/` に配置する  
    ファイル名例: `00_zenkoku_all_20260331.csv`
 2. `config/.env` に `NTA_APPLICATION_ID` が設定済みであること
 
 ### 実行
 
 ```bash
-# CSV → Parquet変換 → DB投入を一括実行
-python src/collectors/nta_collector.py
+# data/raw/nta/ の最新CSVを処理（通常実行）
+python scripts/run_nta.py
+
+# CSVファイルを直接指定
+python scripts/run_nta.py --csv data/raw/nta/00_zenkoku_all_20260331.csv
 
 # Parquet変換をスキップして既存のParquetを使う場合
-python src/collectors/nta_collector.py --skip-staging
+python scripts/run_nta.py --skip-staging
+
+# DBパスを指定
+python scripts/run_nta.py --db data/companies_test.db
 ```
 
 ### 処理内容
 
-| ステップ | 関数 | 説明 |
+| ステップ | モジュール / 関数 | 説明 |
 |---|---|---|
-| CSV → Parquet | `convert_raw_to_staging()` | ヘッダーなしCSVに列名を付与し、Parquet形式で保存 |
-| Parquet → DB | `load_to_db()` | companies テーブルを全件削除してから一括INSERT |
+| STEP 1: CSV → Parquet | `nta_to_parquet.convert_raw_to_staging()` | ヘッダーなしCSVに列名を付与し、Parquet形式で保存 |
+| STEP 2: 概要確認 | `nta_to_parquet.summarize()` | 法人種別・閉鎖件数などをログに出力 |
+| STEP 3: Parquet → DB | `nta_to_sqlite.load_to_db()` | companies テーブルを全件削除してから一括INSERT |
 
 > **注意:** `load_to_db()` は既存データを全件削除してから投入する（フルリフレッシュ）。  
 > 差分履歴（change_history）は削除されない。
@@ -135,9 +142,26 @@ python scripts/run_nta_diff.py --db /path/to/other.db
 `name` / `furigana` / `kind` / `prefecture_name` / `city_name` / `street_number` /  
 `prefecture_code` / `city_code` / `post_code` / `close_date` / `close_cause` / `process`
 
+### 戻り値
+
+`apply_diff()` は `DiffResult` オブジェクトを返す。
+
+| フィールド | 説明 |
+|---|---|
+| `inserted` | 新設（DBに存在しなかった）件数 |
+| `updated` | 変更あり（UPDATE）件数 |
+| `closed` | 閉鎖（`process=21`）件数 |
+| `skipped` | 変更なし（スキップ）件数 |
+| `errors` | エラーメッセージのリスト |
+
 ### ログ
 
-実行ログは `logs/nta_diff_YYYYMMDD.log` に保存される（UTCではなくローカル時刻）。
+| 処理 | ログファイル |
+|---|---|
+| 全件フルロード | `logs/nta_YYYYMMDD.log` |
+| 定期差分更新 | `logs/nta_diff_YYYYMMDD.log` |
+
+タイムスタンプはローカル時刻（UTCではない）。
 
 ---
 
@@ -145,26 +169,31 @@ python scripts/run_nta_diff.py --db /path/to/other.db
 
 ```
 src/
-  collectors/
-    nta_collector.py        全件CSVのParquet変換・DB投入
-    nta_diff_collector.py   差分APIフェッチ・XML解析・ページネーション
+  converters/
+    nta_to_parquet.py       全件CSV → Parquet変換（convert_raw_to_staging）
+  loaders/
+    nta_to_sqlite.py        Parquet → SQLite投入（load_to_db）
+  extractors/
+    nta_diff_collector.py   差分APIフェッチ・XML解析・ページネーション（fetch_diff）
   processors/
-    diff_processor.py       差分検出・DB更新・変更履歴記録
+    diff_processor.py       差分検出・DB更新・変更履歴記録（apply_diff）
   models/
     schema.py               DBスキーマ定義・COLUMN_MAP・init_db
 
 scripts/
+  run_nta.py                全件フルロードのエントリーポイント
   run_nta_diff.py           定期差分更新のエントリーポイント
 
 config/
   .env                      NTA_APPLICATION_ID を設定（gitignore対象）
 
 data/
-  raw/                      全件ダウンロードCSV置き場
-  staging/                  中間Parquetファイル置き場
+  raw/nta/                  全件ダウンロードCSV置き場
+  staging/                  中間Parquetファイル置き場（nta_YYYYMMDD.parquet）
   companies.db              SQLiteデータベース
 
 logs/
+  nta_YYYYMMDD.log          全件フルロード実行ログ
   nta_diff_YYYYMMDD.log     差分更新実行ログ
 ```
 

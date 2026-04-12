@@ -2,7 +2,7 @@
 
 **対象サイト:** ハローワークインターネットサービス  
 **取得方法:** Selenium（Microsoft Edge）によるスクレイピング  
-**最終更新:** 2026-04-11
+**最終更新:** 2026-04-12
 
 ---
 
@@ -13,13 +13,23 @@
 ### 処理フロー
 
 ```
-STEP 1: 求人番号収集
-  ハローワーク検索画面 → 求人番号リスト（jobnumbers_YYYYMMDD.csv）
+STEP 1: 求人番号収集（crawl）
+  ハローワーク検索画面
+    ├─ 5種類の求人種別でループ
+    │   └─ 一般求人: 8エリア × 47都道府県 でループ検索
+    │       → 一時CSV: {temp_dir}/jobnumber_{kind}_{district}_{pref}.csv
+    │          （既存CSVがあればスキップ・再開対応）
+    └─ 重複除去して最終CSV保存
+       → {output_dir}/jobnumbers_YYYYMMDD.csv
+       → 一時CSVを全削除
 
-STEP 2: 詳細HTMLダウンロード
-  求人番号リスト → 詳細ページHTML → C:\Temp\html\YYYYMMDD\{job_number}.html
+STEP 2: 詳細HTMLダウンロード（scrape_details）
+  求人番号リスト → 詳細ページHTML
+    → {html_dir}/YYYYMMDD/{job_number}.html
+       （既存HTMLがあればスキップ・再開対応）
+       ※ 障害のある方のための求人（種別5）は kyujintype=1 で詳細取得
 
-STEP 3: Parquet変換
+STEP 3: Parquet変換（parse_to_parquet）
   HTMLファイル群 → data/staging/hellowork_YYYYMMDD.parquet
 ```
 
@@ -49,7 +59,7 @@ company_database/
 ### 生HTMLの保存場所
 
 ```
-C:\Temp\html\
+{html_dir}/          ← config/config.yaml の html_dir（デフォルト: C:\Temp\html）
 └── 20260410\          # 日付ごとのディレクトリ
     ├── 01010-12345678.html
     ├── 01010-12345679.html
@@ -105,7 +115,29 @@ python scripts/run_hellowork.py --date 2026-04-10 --skip-crawl
 |---|---|---|
 | `--date YYYY-MM-DD` | 当日 | 処理対象の日付 |
 | `--headless` | なし | ブラウザを非表示で起動 |
-| `--skip-crawl` | なし | クロールをスキップしParquet変換のみ実行 |
+| `--skip-crawl` | なし | STEP 1（求人番号収集）と STEP 2（HTMLダウンロード）をスキップし、既存HTMLのParquet変換のみ実行 |
+
+### クロール仕様（STEP 1 & 2）
+
+#### 求人番号収集（STEP 1）の検索ループ
+
+| 求人種別 | 都道府県絞り込み | 一時CSVファイル名 |
+|---|---|---|
+| 1: 一般求人 | あり（8エリア × 47都道府県） | `jobnumber_1_{district}_{pref:02d}.csv` |
+| 2: 新卒・既卒求人 | なし（全国一括） | `jobnumber_2.csv` |
+| 3: 季節求人 | なし | `jobnumber_3.csv` |
+| 4: 出稼ぎ求人 | なし | `jobnumber_4.csv` |
+| 5: 障害のある方のための求人 | なし | `jobnumber_5.csv` |
+
+- 一時CSVが既に存在する場合はその検索をスキップ（中断からの再開に対応）
+- 全種別の収集完了後、重複除去して `{output_dir}/jobnumbers_YYYYMMDD.csv` に保存
+- 一時CSVはすべて削除される
+
+#### 詳細HTMLダウンロード（STEP 2）
+
+- 既に同名HTMLが存在する場合はスキップ（中断からの再開に対応）
+- **障害のある方のための求人（種別5）** は詳細URL構築時に `kyujintype=1` を使用
+- ページ間待機: `wait_between_details + random(0, 1)` 秒
 
 ---
 
@@ -449,7 +481,11 @@ merged = df.merge(companies, on="corporate_number", how="left")
 
 ### クロールが止まる・途中で終了する
 
-`--skip-crawl` で再実行するとHTMLは既存ファイルをスキップして途中から再開できる。
+求人番号収集（STEP 1）は一時CSVが残っていれば途中から再開される。  
+HTMLダウンロード（STEP 2）も既存HTMLをスキップして続きから再開される。  
+再実行するだけで中断箇所から継続できる。
+
+HTML収集済みで Parquet 変換のみ必要な場合は `--skip-crawl` を使う。
 
 ```bash
 python scripts/run_hellowork.py --date 2026-04-10 --skip-crawl
