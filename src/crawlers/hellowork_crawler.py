@@ -290,10 +290,12 @@ def search(
 
     # 検索
     try:
-        _wait_for(driver, By.ID, "ID_searchBtn")
-        driver.find_element(By.ID, "ID_searchBtn").click()
+        search_btn = WebDriverWait(driver, DEFAULT_TIMEOUT).until(
+            EC.element_to_be_clickable((By.ID, "ID_searchBtn"))
+        )
+        search_btn.click()
         time.sleep(WAIT_BETWEEN_PAGES)
-    except (NoSuchElementException, ElementClickInterceptedException):
+    except (NoSuchElementException, ElementClickInterceptedException, TimeoutException):
         logger.error("検索ボタンが見つかりません")
         return False
 
@@ -311,11 +313,12 @@ def search(
     l_jobnumbers = scrape_jobnumber(driver, target_date, kyujintype)
 
     # 一時的にCSVとして保存（job_number + kyujintype）
-    df = pd.DataFrame(l_jobnumbers)
-    if kyujintype == 1:
-        df.to_csv(os.path.join(TEMP_CSV_DIR, "jobnumber_{}_{}_{:02d}.csv".format(kyujintype, district_no, prefecture_code)), index=False)
-    else:
-        df.to_csv(os.path.join(TEMP_CSV_DIR, "jobnumber_{}.csv".format(kyujintype)), index=False)
+    if l_jobnumbers:
+        df = pd.DataFrame(l_jobnumbers)
+        if kyujintype == 1:
+            df.to_csv(os.path.join(TEMP_CSV_DIR, "jobnumber_{}_{}_{:02d}.csv".format(kyujintype, district_no, prefecture_code)), index=False)
+        else:
+            df.to_csv(os.path.join(TEMP_CSV_DIR, "jobnumber_{}.csv".format(kyujintype)), index=False)
     logger.info("検索実行完了: %d 件の求人番号を取得", len(l_jobnumbers))
     return l_jobnumbers
 
@@ -420,8 +423,11 @@ def crawl(
                     k = MAPPING_PREFECTURE[prefecture]
                     if os.path.exists(os.path.join(TEMP_CSV_DIR, "jobnumber_{}_{}_{:02d}.csv".format(i, j, k))):
                         logger.info("スキップ - 既にCSVが存在: %s, %s, %s", kind, district, prefecture)
-                        df = pd.read_csv(os.path.join(TEMP_CSV_DIR, "jobnumber_{}_{}_{:02d}.csv".format(i, j, k)))
-                        l_jobnumbers.extend(df.to_dict("records"))
+                        try:
+                            df = pd.read_csv(os.path.join(TEMP_CSV_DIR, "jobnumber_{}_{}_{:02d}.csv".format(i, j, k)))
+                            l_jobnumbers.extend(df.to_dict("records"))
+                        except pd.errors.EmptyDataError:
+                            logger.info("CSVが空（検索結果ゼロ）: %s, %s, %s", kind, district, prefecture)
                         continue
                     logger.info("開始 - 地域: %s, 都道府県: %s", district, prefecture)
                     l_jobnumber = search(driver, kyujintype=i, district_no=j, prefecture_code=k, target_date=target_date)
@@ -429,8 +435,11 @@ def crawl(
         else:
             if os.path.exists(os.path.join(TEMP_CSV_DIR, "jobnumber_{}.csv".format(i))):
                 logger.info("スキップ - 既にCSVが存在: %s", kind)
-                df = pd.read_csv(os.path.join(TEMP_CSV_DIR, "jobnumber_{}.csv".format(i)))
-                l_jobnumbers.extend(df.to_dict("records"))
+                try:
+                    df = pd.read_csv(os.path.join(TEMP_CSV_DIR, "jobnumber_{}.csv".format(i)))
+                    l_jobnumbers.extend(df.to_dict("records"))
+                except pd.errors.EmptyDataError:
+                    logger.info("CSVが空（検索結果ゼロ）: %s", kind)
                 continue
             # 一般求人以外は都道府県絞り込みなし（district_no/prefecture_code は未使用）
             l_jobnumber = search(driver, kyujintype=i, district_no=0, prefecture_code=0, target_date=target_date)
