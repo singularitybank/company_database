@@ -23,8 +23,8 @@ import pandas as pd
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
-from src.models.schema import COLUMN_MAP, init_db
-from src.utils.db_utils import CACHE_64MB
+from src.master.models.schema import COLUMN_MAP, init_db
+from src.common.db_utils import CACHE_64MB
 
 # ---------------------------------------------------------------------------
 # 定数
@@ -118,7 +118,7 @@ def load_to_db(
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    from src.logging_setup import setup_logging
+    from src.common.logging_setup import setup_logging
     setup_logging()
 
     parser = argparse.ArgumentParser(description="国税庁 Parquet → SQLite 投入")

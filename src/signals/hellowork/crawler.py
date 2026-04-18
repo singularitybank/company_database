@@ -42,7 +42,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
 
-from src.utils.selenium_utils import build_driver
+from src.common.selenium_utils import build_driver
 
 logger = logging.getLogger(__name__)
 
@@ -601,7 +601,7 @@ def scrape_details_selenium(
 # Main
 # ---------------------------------------------------------------------------
 def main(target_date: datetime.date):
-    from src.logging_setup import setup_logging
+    from src.common.logging_setup import setup_logging
     setup_logging()
     logger.info("対象日付: %s", target_date)
 

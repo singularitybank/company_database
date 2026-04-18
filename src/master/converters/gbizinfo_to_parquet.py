@@ -28,8 +28,8 @@ import pyarrow.parquet as pq
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
-from src.converters.gbizinfo_schema import DATASETS
-from src.utils.date_utils import normalize_iso_date
+from src.master.converters.gbizinfo_schema import DATASETS
+from src.common.date_utils import normalize_iso_date
 
 # ---------------------------------------------------------------------------
 # 設定
@@ -195,7 +195,7 @@ def convert(dataset_key: str) -> None:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    from src.logging_setup import setup_logging
+    from src.common.logging_setup import setup_logging
     setup_logging()
 
     targets = sys.argv[1:] if len(sys.argv) > 1 else list(DATASETS.keys())

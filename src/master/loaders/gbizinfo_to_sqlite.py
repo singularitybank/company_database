@@ -34,12 +34,12 @@ log = logging.getLogger(__name__)
 # スキーマ設定（gbizinfo_db_schema.py から）
 # ---------------------------------------------------------------------------
 sys.path.insert(0, str(REPO_ROOT))
-from src.loaders.gbizinfo_db_schema import (
+from src.master.loaders.gbizinfo_db_schema import (
     META_CONFIGS,
     TABLE_CONFIGS,
     pa_type_to_sqlite,
 )
-from src.utils.db_utils import open_connection, configure_for_bulk_load
+from src.common.db_utils import open_connection, configure_for_bulk_load
 
 # ---------------------------------------------------------------------------
 # SQLite 接続・初期設定
@@ -217,7 +217,7 @@ def load_dataset(conn: sqlite3.Connection, key: str, loaded_at: str) -> None:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    from src.logging_setup import setup_logging
+    from src.common.logging_setup import setup_logging
     setup_logging()
 
     keys = sys.argv[1:] if len(sys.argv) > 1 else list(TABLE_CONFIGS.keys())

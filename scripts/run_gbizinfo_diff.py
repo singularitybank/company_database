@@ -35,9 +35,9 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-from src.extractors.gbizinfo_diff_collector import DATASET_KEYS, fetch_diff
-from src.logging_setup import setup_logging
-from src.processors.gbizinfo_diff_processor import apply_diff
+from src.master.extractors.gbizinfo_diff_collector import DATASET_KEYS, fetch_diff
+from src.common.logging_setup import setup_logging
+from src.master.processors.gbizinfo_diff_processor import apply_diff
 
 
 # ---------------------------------------------------------------------------

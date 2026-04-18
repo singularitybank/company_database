@@ -36,7 +36,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-from src.logging_setup import setup_logging
+from src.common.logging_setup import setup_logging
 
 RAW_DIR     = BASE_DIR / "data" / "raw" / "shokuba"
 STAGING_DIR = BASE_DIR / "data" / "staging" / "shokuba"
@@ -93,7 +93,7 @@ def main() -> int:
             return 1
         log.info("[STEP 1/3] 使用 CSV: %s", csv_path)
     else:
-        from src.downloaders.shokuba_downloader import download
+        from src.master.downloaders.shokuba_downloader import download
         log.info("[STEP 1/3] ダウンロード 開始")
         step_start = time.time()
         try:
@@ -117,7 +117,7 @@ def main() -> int:
         if missing:
             log.warning("[STEP 2/3] 以下の Parquet が見つかりません: %s", missing)
     else:
-        from src.converters.shokuba_to_parquet import convert
+        from src.master.converters.shokuba_to_parquet import convert
         log.info("[STEP 2/3] CSV → Parquet 変換 開始: %s", csv_path.name)
         step_start = time.time()
         try:
@@ -131,8 +131,8 @@ def main() -> int:
             return 1
 
     # ── STEP 3: Parquet → SQLite ─────────────────────────────────────────────
-    from src.loaders.shokuba_to_sqlite import ALL_TABLES, load_table
-    from src.utils.db_utils import configure_for_bulk_load, open_connection
+    from src.master.loaders.shokuba_to_sqlite import ALL_TABLES, load_table
+    from src.common.db_utils import configure_for_bulk_load, open_connection
     from datetime import datetime, timezone
 
     targets = args.tables or ALL_TABLES

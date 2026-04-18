@@ -538,8 +538,8 @@ def apply_diff(
 if __name__ == "__main__":
     import argparse
     from datetime import date, timedelta
-    from src.logging_setup import setup_logging
-    from src.extractors.gbizinfo_diff_collector import fetch_diff, DATASET_KEYS
+    from src.common.logging_setup import setup_logging
+    from src.master.extractors.gbizinfo_diff_collector import fetch_diff, DATASET_KEYS
 
     setup_logging()
 

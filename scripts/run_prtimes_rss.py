@@ -38,14 +38,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config import prtimes as _cfg
-from src.crawlers.prtimes_article_crawler import scrape_articles
-from src.crawlers.prtimes_company_crawler import scrape_companies
-from src.crawlers.prtimes_rss_crawler import fetch_global_rss
-from src.loaders.prtimes_db_loader import load, update_articles, update_companies
-from src.logging_setup import setup_logging
-from src.parsers.prtimes_article_parser import parse as parse_articles
-from src.parsers.prtimes_company_parser import parse as parse_companies
-from src.parsers.prtimes_rss_parser import parse as parse_rss
+from src.signals.prtimes.crawlers.article_crawler import scrape_articles
+from src.signals.prtimes.crawlers.company_crawler import scrape_companies
+from src.signals.prtimes.crawlers.rss_crawler import fetch_global_rss
+from src.signals.prtimes.loaders.db_loader import load, update_articles, update_companies
+from src.common.logging_setup import setup_logging
+from src.signals.prtimes.parsers.article_parser import parse as parse_articles
+from src.signals.prtimes.parsers.company_parser import parse as parse_companies
+from src.signals.prtimes.parsers.rss_parser import parse as parse_rss
 
 JST     = timezone(timedelta(hours=9))
 DB_PATH = PROJECT_ROOT / _cfg["db_path"]

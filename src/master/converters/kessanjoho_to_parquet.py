@@ -45,7 +45,7 @@ COMPRESSION = "snappy"
 BATCH_SIZE  = 500       # Parquetへの書き出しバッチ（行数ではなくファイル数）
 
 sys.path.insert(0, str(REPO_ROOT))
-from src.utils.date_utils import normalize_jp_date
+from src.common.date_utils import normalize_jp_date
 
 log = logging.getLogger(__name__)
 
@@ -148,7 +148,7 @@ def parse_xml(filepath: Path) -> tuple[list[dict], dict | None]:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    from src.logging_setup import setup_logging
+    from src.common.logging_setup import setup_logging
     setup_logging()
 
     xml_files = sorted(XML_DIR.glob("*.xml"))

@@ -20,7 +20,7 @@ from typing import Optional
 
 from bs4 import BeautifulSoup
 
-from src.crawlers.prtimes_company_crawler import CompanyHtmlResult
+from src.signals.prtimes.crawlers.company_crawler import CompanyHtmlResult
 
 logger = logging.getLogger(__name__)
 

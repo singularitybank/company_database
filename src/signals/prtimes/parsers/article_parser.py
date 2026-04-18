@@ -26,7 +26,7 @@ from typing import Optional
 from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from src.crawlers.prtimes_article_crawler import ArticleHtmlResult
+from src.signals.prtimes.crawlers.article_crawler import ArticleHtmlResult
 
 logger = logging.getLogger(__name__)
 

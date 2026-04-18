@@ -25,7 +25,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from src.models.schema import COMPANY_COLUMNS, init_db
+from src.master.models.schema import COMPANY_COLUMNS, init_db
 
 # ---------------------------------------------------------------------------
 # 定数
@@ -268,7 +268,7 @@ if __name__ == "__main__":
     import argparse
     from datetime import date, timedelta
 
-    from src.logging_setup import setup_logging
+    from src.common.logging_setup import setup_logging
     setup_logging()
 
     BASE_DIR = Path(__file__).resolve().parents[2]
@@ -282,7 +282,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # extractor を使って差分を取得してから適用
-    from src.extractors.nta_diff_collector import fetch_diff
+    from src.master.extractors.nta_diff_collector import fetch_diff
     records = fetch_diff(args.from_date, args.to_date, address_codes=[args.address])
     result = apply_diff(records, args.db)
     print(f"\n結果: {result.summary()}")

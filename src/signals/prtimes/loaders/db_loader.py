@@ -25,10 +25,10 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
 from src.config import prtimes as _cfg
-from src.models.prtimes_schema import init_db
-from src.parsers.prtimes_rss_parser import ArticleRecord
-from src.parsers.prtimes_article_parser import ArticleParseResult
-from src.parsers.prtimes_company_parser import CompanyParseResult
+from src.signals.prtimes.models.schema import init_db
+from src.signals.prtimes.parsers.rss_parser import ArticleRecord
+from src.signals.prtimes.parsers.article_parser import ArticleParseResult
+from src.signals.prtimes.parsers.company_parser import CompanyParseResult
 
 logger = logging.getLogger(__name__)
 

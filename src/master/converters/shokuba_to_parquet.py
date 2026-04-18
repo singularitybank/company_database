@@ -31,12 +31,12 @@ import pyarrow.parquet as pq
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
-from src.converters.shokuba_schema import (
+from src.master.converters.shokuba_schema import (
     COLUMN_MAP,
     DATE_COLUMNS,
     TABLE_RANGES,
 )
-from src.utils.date_utils import normalize_iso_date
+from src.common.date_utils import normalize_iso_date
 
 RAW_DIR     = REPO_ROOT / "data" / "raw" / "shokuba"
 STAGING_DIR = REPO_ROOT / "data" / "staging" / "shokuba"
@@ -235,7 +235,7 @@ def find_latest_csv() -> Path | None:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    from src.logging_setup import setup_logging
+    from src.common.logging_setup import setup_logging
     setup_logging(filename_prefix="shokuba")
 
     parser = argparse.ArgumentParser(

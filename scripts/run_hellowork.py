@@ -32,9 +32,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config import hellowork as _cfg
-from src.crawlers.hellowork_crawler import build_driver, crawl, scrape_details
-from src.logging_setup import setup_logging
-from src.parsers.hellowork_parser import parse_to_parquet
+from src.signals.hellowork.crawler import build_driver, crawl, scrape_details
+from src.common.logging_setup import setup_logging
+from src.signals.hellowork.parser import parse_to_parquet
 
 
 # ---------------------------------------------------------------------------

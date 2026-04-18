@@ -100,7 +100,7 @@ def download(output_path: Path | None = None, timeout: int = TIMEOUT) -> Path:
 
 
 def main() -> None:
-    from src.logging_setup import setup_logging
+    from src.common.logging_setup import setup_logging
     setup_logging(filename_prefix="shokuba")
 
     parser = argparse.ArgumentParser(

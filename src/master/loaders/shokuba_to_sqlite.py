@@ -36,8 +36,8 @@ BATCH_SIZE  = 50_000
 
 sys.path.insert(0, str(REPO_ROOT))
 
-from src.converters.shokuba_schema import TABLE_INDEXES, TABLE_RANGES
-from src.utils.db_utils import configure_for_bulk_load, open_connection
+from src.master.converters.shokuba_schema import TABLE_INDEXES, TABLE_RANGES
+from src.common.db_utils import configure_for_bulk_load, open_connection
 
 log = logging.getLogger(__name__)
 
@@ -171,7 +171,7 @@ def load_table(
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    from src.logging_setup import setup_logging
+    from src.common.logging_setup import setup_logging
     setup_logging(filename_prefix="shokuba")
 
     targets = sys.argv[1:] if len(sys.argv) > 1 else ALL_TABLES

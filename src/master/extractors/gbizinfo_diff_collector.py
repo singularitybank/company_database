@@ -480,7 +480,7 @@ def fetch_diff(
 
 if __name__ == "__main__":
     import argparse
-    from src.logging_setup import setup_logging
+    from src.common.logging_setup import setup_logging
     setup_logging()
 
     parser = argparse.ArgumentParser(description="gBizINFO 差分APIフェッチ動作確認")

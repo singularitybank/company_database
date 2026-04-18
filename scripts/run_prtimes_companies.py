@@ -23,10 +23,10 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
 
 from src.config import prtimes as _cfg
-from src.crawlers.prtimes_company_crawler import scrape_companies, CompanyHtmlResult
-from src.parsers.prtimes_company_parser import parse
-from src.loaders.prtimes_db_loader import update_companies, init_db
-from src.models.prtimes_schema import init_db as _init_db
+from src.signals.prtimes.crawlers.company_crawler import scrape_companies, CompanyHtmlResult
+from src.signals.prtimes.parsers.company_parser import parse
+from src.signals.prtimes.loaders.db_loader import update_companies, init_db
+from src.signals.prtimes.models.schema import init_db as _init_db
 
 logging.basicConfig(
     level=logging.INFO,

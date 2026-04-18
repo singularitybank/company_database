@@ -31,7 +31,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from src.config import get_nta_app_id
-from src.models.schema import COLUMN_MAP
+from src.master.models.schema import COLUMN_MAP
 
 # ---------------------------------------------------------------------------
 # 定数
@@ -224,7 +224,7 @@ def _dedup_by_corporate_number(records: list[dict]) -> list[dict]:
 
 if __name__ == "__main__":
     import argparse
-    from src.logging_setup import setup_logging
+    from src.common.logging_setup import setup_logging
     setup_logging()
 
     parser = argparse.ArgumentParser(description="国税庁 差分APIフェッチ動作確認")

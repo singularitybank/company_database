@@ -25,7 +25,7 @@ sys.path.insert(0, str(__file__).replace("\\", "/").split("src/")[0])
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from src.crawlers.prtimes_rss_crawler import RssEntry
+from src.signals.prtimes.crawlers.rss_crawler import RssEntry
 
 logger = logging.getLogger(__name__)
 

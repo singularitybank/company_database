@@ -20,9 +20,9 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
-from src.extractors.nta_diff_collector import ALL_ADDRESS_CODES, fetch_diff
-from src.logging_setup import setup_logging
-from src.processors.diff_processor import apply_diff
+from src.master.extractors.nta_diff_collector import ALL_ADDRESS_CODES, fetch_diff
+from src.common.logging_setup import setup_logging
+from src.master.processors.diff_processor import apply_diff
 
 
 # ---------------------------------------------------------------------------

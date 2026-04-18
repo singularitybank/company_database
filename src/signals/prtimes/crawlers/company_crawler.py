@@ -33,7 +33,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src.config import prtimes as _cfg
-from src.utils.selenium_utils import build_driver
+from src.common.selenium_utils import build_driver
 
 logger = logging.getLogger(__name__)
 
