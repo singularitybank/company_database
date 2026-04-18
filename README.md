@@ -14,6 +14,7 @@
 | [しょくばらぼ（厚生労働省）](docs/shokuba.md) | 全件CSV（自動ダウンロード） | 月1回 | `data/shokuba.db` |
 | [ハローワークインターネットサービス](docs/hellowork.md) | Seleniumクローリング（日次） | 毎日 | `data/staging/hellowork_YYYYMMDD.parquet` |
 | [PR Times](docs/prtimes.md) | RSS + Seleniumクローリング（1時間毎） | 毎時 | `data/prtimes.db` |
+| [倒産情報（帝国データバンク・東京商工リサーチ）](docs/bankruptcy.md) | RSS + Webスクレイピング（毎日） | 平日随時 | `data/bankruptcy.db` |
 
 ---
 
@@ -144,6 +145,25 @@ python scripts/run_prtimes_companies.py --parse-only
 
 ---
 
+### 倒産情報（毎日）
+
+```bash
+# 通常実行（全フロー: RSS取得 → スクレイピング → パース → 名寄せ）
+python scripts/run_bankruptcy.py
+
+# RSS保存のみ
+python scripts/run_bankruptcy.py --rss-only
+
+# 名寄せのみ再実行
+python scripts/run_bankruptcy_match.py
+```
+
+**Windowsタスクスケジューラーへの登録:** `scripts/run_bankruptcy.bat` から呼び出す。トリガー: 毎日1回。
+
+詳細は [docs/bankruptcy.md](docs/bankruptcy.md) を参照。
+
+---
+
 ## データ構造
 
 ### DB一覧
@@ -154,6 +174,7 @@ python scripts/run_prtimes_companies.py --parse-only
 | `data/gbizinfo.db` | `gbiz_companies`, `gbiz_financial`, `gbiz_patent` 他 | 約300万件 |
 | `data/shokuba.db` | `shokuba_basic`, `shokuba_work_hours` 他8テーブル | 約60万件 |
 | `data/prtimes.db` | `prtimes_companies`, `prtimes_articles`, `rss_fetch_log` | 累積増加 |
+| `data/bankruptcy.db` | `tdb_cases`, `tsr_cases`, `bankruptcy_matches` | 累積増加 |
 
 ### データ結合例
 
@@ -192,26 +213,31 @@ company_database/
 │   └── config.yaml     # パス・タイミング設定
 ├── src/
 │   ├── config.py       # 設定の一元管理
-│   ├── extractors/     # 差分データ収集（NTA・gBizInfo）
-│   ├── downloaders/    # 全件ダウンロード（しょくばらぼ）
-│   ├── crawlers/       # Seleniumクローラー（ハローワーク・PR Times企業）/ requestsクローラー（PR Times記事）
-│   ├── parsers/        # HTMLパーサー（ハローワーク・PR Times）
-│   ├── converters/     # 生データ → Parquet変換
-│   ├── loaders/        # Parquet / パース結果 → SQLiteロード
-│   ├── models/         # DBスキーマ定義
-│   ├── processors/     # 差分検出
-│   └── utils/          # 共通ユーティリティ（Selenium初期化等）
+│   ├── common/         # 共通ユーティリティ（DB接続、ロギング、Selenium初期化等）
+│   ├── master/         # マスタ系データ処理（国税庁、gBizInfo、しょくばらぼ）
+│   │   ├── extractors/     # 差分データ収集（NTA・gBizInfo）
+│   │   ├── downloaders/    # 全件ダウンロード（しょくばらぼ）
+│   │   ├── converters/     # 生データ → Parquet変換
+│   │   ├── loaders/        # Parquet → SQLiteロード
+│   │   ├── models/         # DBスキーマ定義
+│   │   └── processors/     # 差分検出
+│   └── signals/        # シグナル系データ処理（日々発生するイベント等）
+│       ├── bankruptcy/     # 倒産情報（TDB・TSR）
+│       ├── hellowork/      # ハローワーク求人情報
+│       └── prtimes/        # PR Timesプレスリリース・企業情報
 ├── scripts/            # 実行エントリーポイント
 ├── data/
 │   ├── companies.db
 │   ├── gbizinfo.db
 │   ├── shokuba.db
 │   ├── prtimes.db
+│   ├── bankruptcy.db   # 倒産情報DB
 │   ├── raw/            # 生データ（CSV/JSON）
 │   └── staging/        # Parquet中間ストア
 ├── logs/
 │   ├── hellowork/      # ハローワーク実行ログ（日付別）
 │   ├── prtimes/        # PR Times実行ログ（日付別）
+│   ├── bankruptcy/     # 倒産情報実行ログ（日付別）
 │   └── *.log           # その他ログ
 └── docs/               # 詳細仕様ドキュメント
 ```
@@ -228,3 +254,4 @@ company_database/
 | [docs/shokuba.md](docs/shokuba.md) | しょくばらぼ詳細仕様・カラム定義 |
 | [docs/hellowork.md](docs/hellowork.md) | ハローワーク詳細仕様・出力カラム一覧 |
 | [docs/prtimes.md](docs/prtimes.md) | PR Times詳細仕様・DB設計・バッチ構成 |
+| [docs/bankruptcy.md](docs/bankruptcy.md) | 倒産情報（TDB・TSR）詳細仕様・名寄せロジック |
