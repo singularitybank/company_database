@@ -15,6 +15,7 @@ PR Times RSS 収集バッチ エントリーポイント
 
 [実行方法]
   # 通常実行（1時間毎にタスクスケジューラから呼び出す）
+  # ※ 夜間（22時〜6時 JST）は自動スキップ
   python scripts/run_prtimes_rss.py
 
   # STEP 1-3（RSS保存）のみ実行
@@ -22,6 +23,9 @@ PR Times RSS 収集バッチ エントリーポイント
 
   # STEP 4-6（記事スクレイピング）のみ実行
   python scripts/run_prtimes_rss.py --scrape-only
+
+  # 夜間スキップを無視して強制実行
+  python scripts/run_prtimes_rss.py --force
 
 [タスクスケジューラ]
   scripts/run_prtimes_rss.bat から呼び出す
@@ -66,10 +70,21 @@ def main() -> int:
         action="store_true",
         help="STEP 4-6（記事 HTML 取得・パース・DB 更新）のみ実行する",
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="夜間スキップを無視して強制実行する",
+    )
     args = parser.parse_args()
 
     now_jst  = datetime.now(JST)
     date_str = now_jst.strftime("%Y%m%d")
+
+    # 夜間（22時〜5時 JST）はスキップ
+    NIGHT_START, NIGHT_END = 22, 6
+    if not args.force and (now_jst.hour >= NIGHT_START or now_jst.hour < NIGHT_END):
+        print(f"[{now_jst.strftime('%H:%M')} JST] 夜間のためスキップ（{NIGHT_START}時〜{NIGHT_END}時）。強制実行は --force を使用してください。")
+        return 0
 
     setup_logging(PROJECT_ROOT / "logs" / "prtimes", log_filename=f"prtimes_rss_{date_str}")
     logger = logging.getLogger(__name__)
