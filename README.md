@@ -13,6 +13,7 @@
 | [gBizInfo（経済産業省）](docs/gbizinfo.md) | 全件CSV（初回）/ 差分API（定期） | 月1回 | `data/gbizinfo.db` |
 | [しょくばらぼ（厚生労働省）](docs/shokuba.md) | 全件CSV（自動ダウンロード） | 月1回 | `data/shokuba.db` |
 | [ハローワークインターネットサービス](docs/hellowork.md) | Seleniumクローリング（日次） | 毎日 | `data/staging/hellowork_YYYYMMDD.parquet` |
+| [PR Times](docs/prtimes.md) | RSS + Seleniumクローリング（1時間毎） | 毎時 | `data/prtimes.db` |
 
 ---
 
@@ -121,6 +122,28 @@ python scripts/run_hellowork.py --date 2026-04-10 --skip-crawl
 
 ---
 
+### PR Times（1時間毎）
+
+```bash
+# 通常実行（RSS収集 → 記事スクレイピング → 企業スクレイピング）
+python scripts/run_prtimes_rss.py
+
+# RSS取得・DB保存のみ
+python scripts/run_prtimes_rss.py --rss-only
+
+# 記事スクレイピングのみ（RSS取得済みの場合）
+python scripts/run_prtimes_rss.py --scrape-only
+
+# 企業ページ一括再取得・再パース
+python scripts/run_prtimes_companies.py --parse-only
+```
+
+**Windowsタスクスケジューラーへの登録:** `scripts/run_prtimes_rss.bat` から呼び出す。トリガー: 毎日00:00から1時間おきに繰り返す。
+
+詳細は [docs/prtimes.md](docs/prtimes.md) を参照。
+
+---
+
 ## データ構造
 
 ### DB一覧
@@ -130,6 +153,7 @@ python scripts/run_hellowork.py --date 2026-04-10 --skip-crawl
 | `data/companies.db` | `companies`, `change_history` | 約600万件 |
 | `data/gbizinfo.db` | `gbiz_companies`, `gbiz_financial`, `gbiz_patent` 他 | 約300万件 |
 | `data/shokuba.db` | `shokuba_basic`, `shokuba_work_hours` 他8テーブル | 約60万件 |
+| `data/prtimes.db` | `prtimes_companies`, `prtimes_articles`, `rss_fetch_log` | 累積増加 |
 
 ### データ結合例
 
@@ -170,21 +194,25 @@ company_database/
 │   ├── config.py       # 設定の一元管理
 │   ├── extractors/     # 差分データ収集（NTA・gBizInfo）
 │   ├── downloaders/    # 全件ダウンロード（しょくばらぼ）
-│   ├── crawlers/       # Seleniumクローラー（ハローワーク）
-│   ├── parsers/        # HTMLパーサー（ハローワーク）
+│   ├── crawlers/       # Seleniumクローラー（ハローワーク・PR Times企業）/ requestsクローラー（PR Times記事）
+│   ├── parsers/        # HTMLパーサー（ハローワーク・PR Times）
 │   ├── converters/     # 生データ → Parquet変換
-│   ├── loaders/        # Parquet → SQLiteロード
-│   ├── models/         # DBスキーマ定義（NTA）
+│   ├── loaders/        # Parquet / パース結果 → SQLiteロード
+│   ├── models/         # DBスキーマ定義
 │   ├── processors/     # 差分検出
-│   └── utils/          # 共通ユーティリティ
+│   └── utils/          # 共通ユーティリティ（Selenium初期化等）
 ├── scripts/            # 実行エントリーポイント
 ├── data/
 │   ├── companies.db
 │   ├── gbizinfo.db
 │   ├── shokuba.db
+│   ├── prtimes.db
 │   ├── raw/            # 生データ（CSV/JSON）
 │   └── staging/        # Parquet中間ストア
-├── logs/               # 実行ログ（日付別）
+├── logs/
+│   ├── hellowork/      # ハローワーク実行ログ（日付別）
+│   ├── prtimes/        # PR Times実行ログ（日付別）
+│   └── *.log           # その他ログ
 └── docs/               # 詳細仕様ドキュメント
 ```
 
@@ -199,3 +227,4 @@ company_database/
 | [docs/gbizinfo.md](docs/gbizinfo.md) | gBizInfo詳細仕様・テーブル構成 |
 | [docs/shokuba.md](docs/shokuba.md) | しょくばらぼ詳細仕様・カラム定義 |
 | [docs/hellowork.md](docs/hellowork.md) | ハローワーク詳細仕様・出力カラム一覧 |
+| [docs/prtimes.md](docs/prtimes.md) | PR Times詳細仕様・DB設計・バッチ構成 |
