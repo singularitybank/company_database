@@ -89,21 +89,25 @@ def main() -> int:
                 len(df), (time.time() - step_start) / 60,
             )
 
-            logger.info("[STEP 2/3] 詳細HTMLダウンロード 開始")
-            step_start = time.time()
-            scrape_details(driver, df, args.date)
-            logger.info(
-                "[STEP 2/3] 詳細HTMLダウンロード完了 (%.1f分)",
-                (time.time() - step_start) / 60,
-            )
-
         except Exception:
-            logger.exception("[STEP 1-2] クロール中に予期しないエラーが発生しました")
+            logger.exception("[STEP 1] クロール中に予期しないエラーが発生しました")
             return 1
         finally:
             if driver:
                 driver.quit()
                 logger.info("ブラウザ終了")
+
+        logger.info("[STEP 2/3] 詳細HTMLダウンロード 開始")
+        step_start = time.time()
+        try:
+            scrape_details(df, args.date)
+        except Exception:
+            logger.exception("[STEP 2] 詳細HTMLダウンロード中に予期しないエラーが発生しました")
+            return 1
+        logger.info(
+            "[STEP 2/3] 詳細HTMLダウンロード完了 (%.1f分)",
+            (time.time() - step_start) / 60,
+        )
 
     # ── STEP 3: Parquet変換 ──────────────────────────────────────────────────
     logger.info("[STEP 3/3] Parquet変換 開始: %s", html_dir)

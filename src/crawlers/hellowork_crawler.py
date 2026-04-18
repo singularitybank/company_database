@@ -28,6 +28,7 @@ from typing import Optional
 from pathlib import Path
 import json
 import glob
+import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -453,15 +454,96 @@ def crawl(
     logger.info("クロール完了: 合計 %d 件取得", len(l_jobnumbers))
     return df
 
+_REQUESTS_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "ja,en-US;q=0.7,en;q=0.3",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Connection": "keep-alive",
+}
+
+
+def _build_detail_url(job_number: str, kyujintype: int) -> str:
+    ktype = "1" if kyujintype == 5 else str(kyujintype)
+    return PAGE_URL.replace("{{job_number}}", job_number).replace("{{kyujintype}}", ktype)
+
+
 def scrape_details(
+    df: pd.DataFrame,
+    target_date: datetime.date,
+) -> None:
+    """求人番号リストをもとに詳細ページのHTMLをローカルに保存する（requests版）。
+
+    保存先:
+        {html_dir}/{YYYYMMDD}/{job_number}.html
+
+    再開対応:
+        既に同名HTMLが存在する求人はスキップするため、
+        途中で中断しても続きから再開できる。
+
+    Args:
+        df:          crawl() が返す DataFrame（job_number・kyujintype 列を持つ）
+        target_date: 取得対象の日付（保存ディレクトリ名に使用）
+    """
+    date_str = target_date.strftime("%Y%m%d")
+    html_dir = os.path.join(_cfg["html_dir"], date_str)
+    os.makedirs(html_dir, exist_ok=True)
+
+    total = len(df)
+    skipped = 0
+    saved = 0
+    errors = 0
+
+    logger.info("詳細ページ保存開始 (requests): %d 件 → %s", total, html_dir)
+
+    session = requests.Session()
+    session.headers.update(_REQUESTS_HEADERS)
+
+    for i, row in enumerate(df.itertuples(index=False), 1):
+        job_number = str(row.job_number)
+        kyujintype = int(row.kyujintype)
+        save_path = os.path.join(html_dir, f"{job_number}.html")
+
+        # 既存ファイルはスキップ（再開対応）
+        if os.path.exists(save_path):
+            skipped += 1
+            continue
+
+        url = _build_detail_url(job_number, kyujintype)
+
+        try:
+            resp = session.get(url, timeout=DEFAULT_TIMEOUT)
+            resp.raise_for_status()
+            with open(save_path, "w", encoding="utf-8") as f:
+                f.write(resp.text)
+            saved += 1
+            time.sleep(WAIT_BETWEEN_DETAILS + random.uniform(0, 1))
+        except requests.exceptions.Timeout:
+            logger.warning("[%d/%d] タイムアウト: %s", i, total, job_number)
+            errors += 1
+        except Exception as e:
+            logger.warning("[%d/%d] 取得エラー (%s): %s", i, total, job_number, e)
+            errors += 1
+
+        if i % 100 == 0:
+            logger.info("  進捗: %d / %d 件（保存: %d, スキップ: %d, エラー: %d）", i, total, saved, skipped, errors)
+
+    logger.info("詳細ページ保存完了: 保存=%d, スキップ=%d, エラー=%d", saved, skipped, errors)
+
+
+def scrape_details_selenium(
     driver: webdriver.Edge,
     df: pd.DataFrame,
     target_date: datetime.date,
 ) -> None:
-    """求人番号リストをもとに詳細ページのHTMLをローカルに保存する。
+    """求人番号リストをもとに詳細ページのHTMLをローカルに保存する（Selenium版）。
 
     保存先:
-        {OUTPUT_CSV_DIR}/html/{YYYYMMDD}/{job_number}.html
+        {html_dir}/{YYYYMMDD}/{job_number}.html
 
     再開対応:
         既に同名HTMLが存在する求人はスキップするため、
@@ -481,7 +563,7 @@ def scrape_details(
     saved = 0
     errors = 0
 
-    logger.info("詳細ページ保存開始: %d 件 → %s", total, html_dir)
+    logger.info("詳細ページ保存開始 (Selenium): %d 件 → %s", total, html_dir)
 
     for i, row in enumerate(df.itertuples(index=False), 1):
         job_number = str(row.job_number)
@@ -492,19 +574,8 @@ def scrape_details(
         if os.path.exists(save_path):
             skipped += 1
             continue
-        if kyujintype != 5:
-            url = (
-                PAGE_URL
-                .replace("{{job_number}}", job_number)
-                .replace("{{kyujintype}}", str(kyujintype))
-            )
-        else:
-            # 障害のある方のための求人は kyujintype=1 で固定
-            url = (
-                PAGE_URL
-                .replace("{{job_number}}", job_number)
-                .replace("{{kyujintype}}", "1")
-            )
+
+        url = _build_detail_url(job_number, kyujintype)
 
         try:
             driver.get(url)
@@ -537,10 +608,11 @@ def main(target_date: datetime.date):
     driver = build_driver(headless=_cfg["headless"])
     try:
         df = crawl(driver, target_date)
-        scrape_details(driver, df, target_date)
     finally:
         driver.quit()
         logger.info("ドライバー終了")
+
+    scrape_details(df, target_date)
 
 # ---------------------------------------------------------------------------
 # エントリーポイント
