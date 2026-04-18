@@ -602,7 +602,7 @@ def parse_to_parquet(
     """HTMLディレクトリをパースしてParquetファイルに出力する。
 
     ファイル名は html_dir の末尾ディレクトリ名（YYYYMMDD）から決定する。
-    例: html_dir=C:/Temp/html/20260410 → staging_dir/hellowork_20260410.parquet
+    例: html_dir=C:/Temp/html/20260410 → staging_dir/hellowork/hellowork_20260410.parquet
 
     Args:
         html_dir:    HTMLファイルが格納されたディレクトリ（末尾がYYYYMMDD）
@@ -682,5 +682,5 @@ if __name__ == "__main__":
         # 通常モード：config の html_dir/{YYYYMMDD} を読んで staging_dir に Parquet 出力
         date_str = args.date.strftime("%Y%m%d")
         html_dir = Path(_cfg["html_dir"]) / date_str
-        staging_dir = Path(__file__).resolve().parents[2] / _cfg["staging_dir"]
+        staging_dir = Path(__file__).resolve().parents[2] / _cfg["staging_dir"] / "hellowork"
         parse_to_parquet(html_dir, staging_dir)

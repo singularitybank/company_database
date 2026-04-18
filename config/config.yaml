@@ -27,3 +27,26 @@ hellowork:
 
   # ブラウザをヘッドレスモードで起動するか
   headless: false
+
+# ------------------------------------------------------------
+# PR Times
+# ------------------------------------------------------------
+prtimes:
+  # グローバルRSS URL
+  rss_url: "https://prtimes.jp/index.rdf"
+
+  # 生HTML保存先（記事・企業ページ）
+  html_dir: "C:/Temp/html/prtimes"
+
+  # DB保存先
+  db_path: "data/prtimes.db"
+
+  # リクエスト間隔（秒）。実際にはこの値 + random.uniform(0, 1) 秒待機する
+  wait_between_articles: 1.0
+  wait_between_companies: 1.5
+
+  # タイムアウト（秒）
+  timeout: 30
+
+  # リトライ回数
+  retry_count: 3

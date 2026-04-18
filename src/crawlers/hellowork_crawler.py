@@ -38,10 +38,10 @@ from selenium.common.exceptions import (
     ElementClickInterceptedException,
 )
 from selenium.webdriver.common.by import By
-from selenium.webdriver.edge.options import Options
-from selenium.webdriver.edge.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
+
+from src.utils.selenium_utils import build_driver
 
 logger = logging.getLogger(__name__)
 
@@ -96,41 +96,8 @@ MAPPING_PREFECTURE = {
     "福岡県": 40, "佐賀県": 41, "長崎県": 42, "熊本県": 43, "大分県": 44, "宮崎県": 45, "鹿児島県": 46, "沖縄県": 47
 }
 # ---------------------------------------------------------------------------
-# ドライバー初期化
+# ドライバー初期化  ※ build_driver は src.utils.selenium_utils に移管
 # ---------------------------------------------------------------------------
-
-def build_driver(headless: bool = _cfg["headless"]) -> webdriver.Edge:
-    """Edgeドライバーを初期化して返す。
-
-    Args:
-        headless: Trueにするとブラウザウィンドウを表示しない
-
-    Returns:
-        初期化済みの Edge WebDriver インスタンス
-    """
-    options = Options()
-    if headless:
-        options.add_argument("--headless")
-
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--disable-software-rasterizer")  # GPU overlay エラー抑制
-    options.add_argument("--log-level=3")                   # ERROR以上のみ（Chromiumログ抑制）
-    options.add_argument("--window-size=1280,900")
-    options.add_argument("--lang=ja")
-    # ボット検出対策: 自動化フラグを軽減
-    options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
-    options.add_experimental_option("useAutomationExtension", False)
-
-    # Selenium 4.6+ の selenium-manager が msedgedriver を自動管理
-    # service_log_path=os.devnull でドライバー自身のログも抑制
-    service = Service(log_output=os.devnull)
-
-    driver = webdriver.Edge(service=service, options=options)
-    driver.implicitly_wait(5)
-    logger.info("Edge ドライバー起動完了 (headless=%s)", headless)
-    return driver
 
 
 # ---------------------------------------------------------------------------
@@ -205,10 +172,24 @@ def filter_prefecture(driver: webdriver.Edge, district_no: int, prefecture_code:
         _wait_for(driver, By.NAME, "skCheck{:02d}".format(prefecture_code))
         todohuken_checkbox = district_btn.find_element(By.NAME, "skCheck{:02d}".format(prefecture_code))
         todohuken_checkbox.click()
-        # 確定
-        driver.find_element(By.ID, "ID_ok4").click()
-        time.sleep(1)
-        return True
+        # 確定ボタン：クリック可能になるまで待ってリトライ、最終的にJSフォールバック
+        for attempt in range(3):
+            try:
+                ok_btn = WebDriverWait(driver, DEFAULT_TIMEOUT).until(
+                    EC.element_to_be_clickable((By.ID, "ID_ok4"))
+                )
+                ok_btn.click()
+                time.sleep(1)
+                return True
+            except ElementClickInterceptedException:
+                if attempt < 2:
+                    logger.warning("確定ボタンがクリックできません (試行 %d/3)、再試行します", attempt + 1)
+                    time.sleep(1 + attempt)
+                else:
+                    logger.warning("確定ボタンがクリックできません (3回失敗)、JavaScriptでクリックします")
+                    driver.execute_script("document.getElementById('ID_ok4').click()")
+                    time.sleep(1)
+                    return True
     except NoSuchElementException:
         logger.warning("都道府県選択の要素が見つかりません")
         return False
@@ -438,7 +419,11 @@ def crawl(
                             logger.info("CSVが空（検索結果ゼロ）: %s, %s, %s", kind, district, prefecture)
                         continue
                     logger.info("開始 - 地域: %s, 都道府県: %s", district, prefecture)
-                    l_jobnumber = search(driver, kyujintype=i, district_no=j, prefecture_code=k, target_date=target_date)
+                    try:
+                        l_jobnumber = search(driver, kyujintype=i, district_no=j, prefecture_code=k, target_date=target_date)
+                    except Exception:
+                        logger.exception("都道府県のクロール中にエラーが発生しました。スキップして次へ: %s %s", district, prefecture)
+                        l_jobnumber = []
                     if l_jobnumber:
                         l_jobnumbers.extend(l_jobnumber)
         else:
@@ -549,7 +534,7 @@ def main(target_date: datetime.date):
     setup_logging()
     logger.info("対象日付: %s", target_date)
 
-    driver = build_driver()
+    driver = build_driver(headless=_cfg["headless"])
     try:
         df = crawl(driver, target_date)
         scrape_details(driver, df, target_date)

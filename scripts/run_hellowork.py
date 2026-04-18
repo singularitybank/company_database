@@ -62,7 +62,7 @@ def main() -> int:
     args = parser.parse_args()
 
     date_str = args.date.strftime("%Y%m%d")
-    setup_logging(PROJECT_ROOT / "logs", log_filename=f"hellowork_{date_str}")
+    setup_logging(PROJECT_ROOT / "logs" / "hellowork", log_filename=f"hellowork_{date_str}")
     logger = logging.getLogger(__name__)
 
     logger.info("=" * 60)
