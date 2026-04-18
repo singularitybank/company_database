@@ -50,3 +50,37 @@ prtimes:
 
   # リトライ回数
   retry_count: 3
+
+# ------------------------------------------------------------
+# 倒産情報（TDB / TSR）
+# ------------------------------------------------------------
+bankruptcy:
+  # TDB RSS URL
+  tdb_rss_url: "https://www.tdb.co.jp/rss/jouhou.rdf"
+
+  # TSR RSS URL
+  tsr_rss_url: "https://www.tsr-net.co.jp/rss/news_flash.xml"
+
+  # 生HTML保存先
+  html_dir: "C:/Temp/html/bankruptcy"
+
+  # DB保存先
+  db_path: "data/bankruptcy.db"
+
+  # リクエスト間隔（秒）。実際にはこの値 + random.uniform(0, 1) 秒待機する
+  wait_between_requests: 3.0
+
+  # タイムアウト（秒）
+  timeout: 30
+
+  # リトライ回数
+  retry_count: 3
+
+  # 名寄せ：突合対象とする公開日前後の日数
+  match_window_days: 14
+
+  # 名寄せ：確定マッチの閾値（点）
+  match_threshold_confirmed: 85
+
+  # 名寄せ：候補登録の下限閾値（点）
+  match_threshold_candidate: 70

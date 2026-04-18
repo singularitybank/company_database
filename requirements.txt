@@ -5,3 +5,4 @@ pyarrow>=14.0
 beautifulsoup4>=4.12
 requests>=2.32
 python-dotenv>=1.0
+feedparser>=6.0

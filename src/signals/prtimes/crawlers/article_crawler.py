@@ -80,6 +80,19 @@ def _save_html(html: bytes, path: Path) -> None:
     path.write_bytes(html)
 
 
+def _mark_fetch_error(db_path: "str | Path", article_id: str) -> None:
+    """取得失敗記事の html_path を 'FETCH_ERROR' に更新して再試行を防ぐ。"""
+    conn = sqlite3.connect(str(db_path))
+    try:
+        conn.execute(
+            "UPDATE prtimes_articles SET html_path = 'FETCH_ERROR' WHERE article_id = ?",
+            (article_id,),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
 def _load_unscraped(
     db_path: "str | Path",
     limit: Optional[int] = None,
@@ -110,6 +123,7 @@ def _load_unscraped(
 def scrape_articles(
     db_path: "str | Path",
     limit: Optional[int] = None,
+    mark_errors: bool = True,
 ) -> list[ArticleHtmlResult]:
     """未スクレイプ記事の HTML をダウンロードして保存する。
 
@@ -151,6 +165,8 @@ def scrape_articles(
         html = _fetch_html(url)
         if html is None:
             logger.warning("[%d/%d] 取得失敗（スキップ）: %s", i, len(rows), url)
+            if mark_errors:
+                _mark_fetch_error(db_path, article_id)
             results.append(ArticleHtmlResult(
                 article_id  = article_id,
                 article_url = url,
