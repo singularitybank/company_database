@@ -56,6 +56,7 @@ class TsrDetailParseResult:
     business_description: Optional[str]
     bankruptcy_type:      Optional[str]
     liabilities_text:     Optional[str]
+    liabilities_amount:   Optional[int]
     tsr_code:             Optional[str]
     corporate_number:     Optional[str]
     body_capital_text:    Optional[str]
@@ -130,6 +131,10 @@ def _parse_capital_amount(text: Optional[str]) -> Optional[int]:
     if not oku and not man:
         return None
     return (int(oku.group(1)) * 10000 if oku else 0) + (int(man.group(1)) if man else 0)
+
+def _parse_liabilities_amount(text: Optional[str]) -> Optional[int]:
+    """「約1億2000万円」「５７億円」などを万円単位の整数に変換する。"""
+    return _parse_capital_amount(text)
 
 
 def _extract_footnote_fields(footnote: str) -> tuple[Optional[str], Optional[str], Optional[str]]:
@@ -229,6 +234,7 @@ def parse(results: list) -> list[TsrDetailParseResult]:
             # ※ フッターノート（本文末尾の <br> 区切り内に埋め込まれている）
             footnote = _footnote_text(soup)
             cap_text, address, established = _extract_footnote_fields(footnote) if footnote else (None, None, None)
+            liab_text = _tag_text(entry_info, "tag_debt")
 
             parsed.append(TsrDetailParseResult(
                 case_id              = r.case_id,
@@ -238,7 +244,8 @@ def parse(results: list) -> list[TsrDetailParseResult]:
                 industry             = industry,
                 business_description = business_description,
                 bankruptcy_type      = _tag_text(entry_info, "tag_procedure"),
-                liabilities_text     = _tag_text(entry_info, "tag_debt"),
+                liabilities_text     = liab_text,
+                liabilities_amount   = _parse_liabilities_amount(liab_text),
                 tsr_code             = tsr_code_m.group(1) if tsr_code_m else None,
                 corporate_number     = corp_num_m.group(1) if corp_num_m else None,
                 body_capital_text    = cap_text,
@@ -256,7 +263,7 @@ def parse(results: list) -> list[TsrDetailParseResult]:
             parsed.append(TsrDetailParseResult(
                 case_id=r.case_id, company_name=None, published_at=None,
                 prefecture=None, industry=None, business_description=None,
-                bankruptcy_type=None, liabilities_text=None,
+                bankruptcy_type=None, liabilities_text=None, liabilities_amount=None,
                 tsr_code=None, corporate_number=None,
                 body_capital_text=None, body_capital_amount=None,
                 body_address=None, body_established=None,

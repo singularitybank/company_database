@@ -395,8 +395,8 @@ python scripts/run_bankruptcy_match.py
 
 ### 2. 負債額テキストの表記揺れ
 - 全角数字（「５７億円」）・「約」「総額」等の接頭辞が混在
-- **現状**: `liabilities_amount` カラムは存在するが数値パースは未実装
-- **将来対応**: `_parse_capital_amount()` と同様のロジックを `liabilities_text` にも適用
+- **現状**: `_parse_capital_amount()` と同様のロジックでパースして `liabilities_amount` カラムに保存（対応済み）
+- **将来対応**: なし
 
 ### 3. TDB本文カッコ内パターンの揺れ
 - 従業員数は省略される場合がある（`body_employees = None`）
@@ -444,4 +444,4 @@ Selenium は両サイトとも SSR 確認済みのため不要。
 | 12 | `scripts/run_bankruptcy.py` + `.bat` | 全フロー実行（STEP 1〜7）・タスクスケジューラー登録 | ✅ 完了 |
 | 13 | `scripts/run_bankruptcy_match.py` | 名寄せ単独実行 | ✅ 完了 |
 | 14 | TSR/TDBページのレンダリング方式確認 | 実ページ取得・Selenium要否判定 | ✅ 完了 |
-| - | `liabilities_amount` 数値パース | `liabilities_text` → 万円単位整数 | 未実装 |
+| 15 | `liabilities_amount` 数値パース | `liabilities_text` → 万円単位整数 | ✅ 完了 |

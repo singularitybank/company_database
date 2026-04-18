@@ -55,6 +55,7 @@ class TdbDetailParseResult:
     business_description: Optional[str]
     bankruptcy_type:      Optional[str]
     liabilities_text:     Optional[str]
+    liabilities_amount:   Optional[int]
     body_capital_text:    Optional[str]
     body_capital_amount:  Optional[int]
     body_address:         Optional[str]
@@ -96,6 +97,10 @@ def _parse_capital_amount(text: Optional[str]) -> Optional[int]:
     if not oku and not man:
         return None
     return (int(oku.group(1)) * 10000 if oku else 0) + (int(man.group(1)) if man else 0)
+
+def _parse_liabilities_amount(text: Optional[str]) -> Optional[int]:
+    """「約1億2000万円」「５７億円」などを万円単位の整数に変換する。"""
+    return _parse_capital_amount(text)
 
 
 def _header_lines(soup: BeautifulSoup) -> list[str]:
@@ -233,6 +238,7 @@ def parse(results: list) -> list[TdbDetailParseResult]:
                 business_description = biz_line or None,
                 bankruptcy_type      = type_line or None,
                 liabilities_text     = liab_line or None,
+                liabilities_amount   = _parse_liabilities_amount(liab_line),
                 body_capital_text    = cap_text,
                 body_capital_amount  = cap_amount,
                 body_address         = address,
@@ -250,7 +256,7 @@ def parse(results: list) -> list[TdbDetailParseResult]:
                 case_id=r.case_id, company_name=None, published_at=None,
                 tdb_company_code=None, prefecture=None, city=None,
                 business_description=None, bankruptcy_type=None,
-                liabilities_text=None, body_capital_text=None,
+                liabilities_text=None, liabilities_amount=None, body_capital_text=None,
                 body_capital_amount=None, body_address=None,
                 body_representative=None, body_employees=None,
                 body_text=None, html_path=None, detail_scraped_at=scraped_at,
