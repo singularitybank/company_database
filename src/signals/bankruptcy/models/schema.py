@@ -35,16 +35,19 @@ CREATE TABLE IF NOT EXISTS tdb_cases (
     bankruptcy_type      TEXT,
     liabilities_text     TEXT,
     liabilities_amount   INTEGER,
-    body_capital_text    TEXT,
-    body_capital_amount  INTEGER,
-    body_address         TEXT,
-    body_representative  TEXT,
-    body_employees       INTEGER,
+    former_name              TEXT,
+    body_capital_text        TEXT,
+    body_capital_amount      INTEGER,
+    body_address             TEXT,
+    body_registered_address  TEXT,
+    body_representative      TEXT,
+    body_employees           INTEGER,
     published_at         TEXT,
     rss_fetched_at       TEXT NOT NULL,
     detail_scraped_at    TEXT,
     html_path            TEXT,
-    body_text            TEXT
+    body_text            TEXT,
+    is_followup          INTEGER NOT NULL DEFAULT 0
 );
 """
 
@@ -72,6 +75,13 @@ CREATE TABLE IF NOT EXISTS tsr_cases (
     body_text            TEXT
 );
 """
+
+# tdb_cases に後から追加されたカラム（ALTER TABLE マイグレーション用）
+_NEW_TDB_COLUMNS = [
+    ("is_followup",             "INTEGER NOT NULL DEFAULT 0"),
+    ("former_name",             "TEXT"),
+    ("body_registered_address", "TEXT"),
+]
 
 # tsr_cases に後から追加されたカラム（ALTER TABLE マイグレーション用）
 _NEW_TSR_COLUMNS = [
@@ -147,11 +157,20 @@ def init_db(db_path: "str | Path") -> sqlite3.Connection:
     for idx_ddl in DDL_INDEXES:
         conn.execute(idx_ddl)
 
+    _migrate_tdb_cases(conn)
     _migrate_tsr_cases(conn)
 
     conn.commit()
     logger.info("DB初期化完了: %s", db_path)
     return conn
+
+
+def _migrate_tdb_cases(conn: sqlite3.Connection) -> None:
+    existing = {row[1] for row in conn.execute("PRAGMA table_info(tdb_cases)")}
+    for col_name, col_type in _NEW_TDB_COLUMNS:
+        if col_name not in existing:
+            conn.execute(f"ALTER TABLE tdb_cases ADD COLUMN {col_name} {col_type}")
+            logger.info("マイグレーション: tdb_cases に %s カラム追加", col_name)
 
 
 def _migrate_tsr_cases(conn: sqlite3.Connection) -> None:

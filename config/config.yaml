@@ -67,14 +67,17 @@ bankruptcy:
   # DB保存先
   db_path: "data/bankruptcy.db"
 
-  # リクエスト間隔（秒）。実際にはこの値 + random.uniform(0, 1) 秒待機する
-  wait_between_requests: 3.0
+  # リクエスト間隔（秒）。実際には random.uniform(この値, この値 × 2.5) 秒待機する
+  wait_between_requests: 10.0
 
   # タイムアウト（秒）
   timeout: 30
 
   # リトライ回数
   retry_count: 3
+
+  # ブラウザをヘッドレスモードで起動するか（Selenium fallback 用）
+  headless: false
 
   # 名寄せ：突合対象とする公開日前後の日数
   match_window_days: 14

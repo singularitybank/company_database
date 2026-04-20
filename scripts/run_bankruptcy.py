@@ -12,9 +12,10 @@
   STEP 7: 名寄せ（TDB↔TSR、未マッチ案件のみ）
 
 [実行方法]
-  python scripts/run_bankruptcy.py              # 全ステップ実行
-  python scripts/run_bankruptcy.py --rss-only   # STEP 1,4（RSS保存）のみ
-  python scripts/run_bankruptcy.py --no-match   # STEP 7（名寄せ）をスキップ
+  python scripts/run_bankruptcy.py                    # 全ステップ実行
+  python scripts/run_bankruptcy.py --rss-only         # STEP 1,4（RSS保存）のみ
+  python scripts/run_bankruptcy.py --no-match         # STEP 7（名寄せ）をスキップ
+  python scripts/run_bankruptcy.py --from-step 6      # STEP 6,7 のみ実行（HTML保存済み前提）
 
 [タスクスケジューラ]
   scripts/run_bankruptcy.bat から呼び出す
@@ -35,7 +36,7 @@ from src.signals.bankruptcy.crawlers.tsr_rss_crawler  import fetch_rss as tsr_fe
 from src.signals.bankruptcy.crawlers.tsr_detail_crawler import scrape as tsr_scrape
 from src.signals.bankruptcy.parsers.tsr_detail_parser  import parse as tsr_parse
 from src.signals.bankruptcy.crawlers.tdb_rss_crawler  import fetch_rss as tdb_fetch_rss
-from src.signals.bankruptcy.crawlers.tdb_detail_crawler import scrape as tdb_scrape
+from src.signals.bankruptcy.crawlers.tdb_detail_crawler import scrape as tdb_scrape, DetailHtmlResult
 from src.signals.bankruptcy.parsers.tdb_detail_parser  import parse as tdb_parse
 from src.signals.bankruptcy.loaders.db_loader import (
     insert_tsr_rss, insert_tdb_rss,
@@ -49,15 +50,42 @@ from src.common.logging_setup import setup_logging
 
 JST      = timezone(timedelta(hours=9))
 DB_PATH  = PROJECT_ROOT / _cfg["db_path"]
+HTML_DIR = Path(_cfg["html_dir"]) / "tdb"
 
 COMPANIES_DB = PROJECT_ROOT / "data" / "companies.db"
 GBIZINFO_DB  = PROJECT_ROOT / "data" / "gbizinfo.db"
 
 
+def _collect_tdb_saved_html(conn) -> list[DetailHtmlResult]:
+    """保存済み HTML ファイルから DetailHtmlResult を再構築する。
+
+    STEP 5 をスキップして STEP 6 から再開する際に使用する。
+    DB の detail_scraped_at 状態に関わらず html_dir 以下を直接スキャンする。
+    再パース（バグ修正後の再実行）にも対応できる。
+    """
+    url_map = {
+        row[0]: row[1]
+        for row in conn.execute("SELECT case_id, source_url FROM tdb_cases")
+    }
+    results = []
+    for html_file in sorted(HTML_DIR.glob("**/*.html")):
+        case_id = html_file.stem
+        results.append(DetailHtmlResult(
+            case_id    = case_id,
+            source_url = url_map.get(case_id, ""),
+            html_path  = str(html_file),
+            success    = True,
+        ))
+    logging.getLogger(__name__).info("保存済み HTML: %d件発見", len(results))
+    return results
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="倒産情報収集バッチ")
-    parser.add_argument("--rss-only",  action="store_true", help="STEP 1,4（RSS保存）のみ実行")
-    parser.add_argument("--no-match",  action="store_true", help="STEP 7（名寄せ）をスキップ")
+    parser.add_argument("--rss-only",   action="store_true", help="STEP 1,4（RSS保存）のみ実行")
+    parser.add_argument("--no-match",   action="store_true", help="STEP 7（名寄せ）をスキップ")
+    parser.add_argument("--from-step",  type=int, default=1, metavar="N",
+                        help="指定ステップから開始（例: 6 → STEP 6,7 のみ実行）")
     args = parser.parse_args()
 
     now_jst  = datetime.now(JST)
@@ -75,37 +103,41 @@ def main() -> int:
     # DB 初期化（テーブルが存在しない場合のみ作成）
     conn = init_db(DB_PATH)
 
+    from_step = args.from_step
+    if from_step > 1:
+        logger.info("--from-step %d: STEP 1〜%d をスキップ", from_step, from_step - 1)
+
     # =========================================================================
     # STEP 1: TSR RSS 取得 → DB INSERT
     # =========================================================================
-    logger.info("[STEP 1/7] TSR RSS 取得")
-    step_start = time.time()
-    tsr_entries = []
-    try:
-        tsr_entries = tsr_fetch_rss()
-        new_tsr = insert_tsr_rss(conn, tsr_entries) if tsr_entries else 0
-        log_rss_fetch(conn, "tsr", len(tsr_entries), new_tsr)
-        logger.info("[STEP 1/7] 完了: %d件取得, %d件新規 (%.1f秒)",
-                    len(tsr_entries), new_tsr, time.time() - step_start)
-    except Exception:
-        logger.exception("[STEP 1/7] TSR RSS 取得エラー")
-        log_rss_fetch(conn, "tsr", 0, 0, "fetch error")
+    if from_step <= 1:
+        logger.info("[STEP 1/7] TSR RSS 取得")
+        step_start = time.time()
+        try:
+            tsr_entries = tsr_fetch_rss()
+            new_tsr = insert_tsr_rss(conn, tsr_entries) if tsr_entries else 0
+            log_rss_fetch(conn, "tsr", len(tsr_entries), new_tsr)
+            logger.info("[STEP 1/7] 完了: %d件取得, %d件新規 (%.1f秒)",
+                        len(tsr_entries), new_tsr, time.time() - step_start)
+        except Exception:
+            logger.exception("[STEP 1/7] TSR RSS 取得エラー")
+            log_rss_fetch(conn, "tsr", 0, 0, "fetch error")
 
     # =========================================================================
     # STEP 4: TDB RSS 取得 → DB INSERT
     # =========================================================================
-    logger.info("[STEP 4/7] TDB RSS 取得")
-    step_start = time.time()
-    tdb_entries = []
-    try:
-        tdb_entries = tdb_fetch_rss()
-        new_tdb = insert_tdb_rss(conn, tdb_entries) if tdb_entries else 0
-        log_rss_fetch(conn, "tdb", len(tdb_entries), new_tdb)
-        logger.info("[STEP 4/7] 完了: %d件取得, %d件新規 (%.1f秒)",
-                    len(tdb_entries), new_tdb, time.time() - step_start)
-    except Exception:
-        logger.exception("[STEP 4/7] TDB RSS 取得エラー")
-        log_rss_fetch(conn, "tdb", 0, 0, "fetch error")
+    if from_step <= 4:
+        logger.info("[STEP 4/7] TDB RSS 取得")
+        step_start = time.time()
+        try:
+            tdb_entries = tdb_fetch_rss()
+            new_tdb = insert_tdb_rss(conn, tdb_entries) if tdb_entries else 0
+            log_rss_fetch(conn, "tdb", len(tdb_entries), new_tdb)
+            logger.info("[STEP 4/7] 完了: %d件取得, %d件新規 (%.1f秒)",
+                        len(tdb_entries), new_tdb, time.time() - step_start)
+        except Exception:
+            logger.exception("[STEP 4/7] TDB RSS 取得エラー")
+            log_rss_fetch(conn, "tdb", 0, 0, "fetch error")
 
     if args.rss_only:
         logger.info("--rss-only モード: STEP 2,3,5,6,7 をスキップ")
@@ -116,24 +148,25 @@ def main() -> int:
     # =========================================================================
     # STEP 2: TSR 詳細スクレイピング
     # =========================================================================
-    logger.info("[STEP 2/7] TSR 詳細スクレイピング")
-    step_start = time.time()
     tsr_html_results = []
-    try:
-        unscraped = get_tsr_unscraped(conn)
-        logger.info("[STEP 2/7] 未取得: %d件", len(unscraped))
-        if unscraped:
-            tsr_html_results = tsr_scrape(unscraped)
-            ok = sum(1 for r in tsr_html_results if r.success)
-            logger.info("[STEP 2/7] 完了: 成功=%d件, エラー=%d件 (%.1f秒)",
-                        ok, len(tsr_html_results) - ok, time.time() - step_start)
-    except Exception:
-        logger.exception("[STEP 2/7] TSR 詳細スクレイピングエラー")
+    if from_step <= 2:
+        logger.info("[STEP 2/7] TSR 詳細スクレイピング")
+        step_start = time.time()
+        try:
+            unscraped = get_tsr_unscraped(conn)
+            logger.info("[STEP 2/7] 未取得: %d件", len(unscraped))
+            if unscraped:
+                tsr_html_results = tsr_scrape(unscraped)
+                ok = sum(1 for r in tsr_html_results if r.success)
+                logger.info("[STEP 2/7] 完了: 成功=%d件, エラー=%d件 (%.1f秒)",
+                            ok, len(tsr_html_results) - ok, time.time() - step_start)
+        except Exception:
+            logger.exception("[STEP 2/7] TSR 詳細スクレイピングエラー")
 
     # =========================================================================
     # STEP 3: TSR 詳細パース → DB UPDATE
     # =========================================================================
-    if tsr_html_results:
+    if from_step <= 3 and tsr_html_results:
         logger.info("[STEP 3/7] TSR 詳細パース → DB 更新")
         step_start = time.time()
         try:
@@ -146,24 +179,28 @@ def main() -> int:
     # =========================================================================
     # STEP 5: TDB 詳細スクレイピング
     # =========================================================================
-    logger.info("[STEP 5/7] TDB 詳細スクレイピング")
-    step_start = time.time()
     tdb_html_results = []
-    try:
-        unscraped = get_tdb_unscraped(conn)
-        logger.info("[STEP 5/7] 未取得: %d件", len(unscraped))
-        if unscraped:
-            tdb_html_results = tdb_scrape(unscraped)
-            ok = sum(1 for r in tdb_html_results if r.success)
-            logger.info("[STEP 5/7] 完了: 成功=%d件, エラー=%d件 (%.1f秒)",
-                        ok, len(tdb_html_results) - ok, time.time() - step_start)
-    except Exception:
-        logger.exception("[STEP 5/7] TDB 詳細スクレイピングエラー")
+    if from_step <= 5:
+        logger.info("[STEP 5/7] TDB 詳細スクレイピング")
+        step_start = time.time()
+        try:
+            unscraped = get_tdb_unscraped(conn)
+            logger.info("[STEP 5/7] 未取得: %d件", len(unscraped))
+            if unscraped:
+                tdb_html_results = tdb_scrape(unscraped)
+                ok = sum(1 for r in tdb_html_results if r.success)
+                logger.info("[STEP 5/7] 完了: 成功=%d件, エラー=%d件 (%.1f秒)",
+                            ok, len(tdb_html_results) - ok, time.time() - step_start)
+        except Exception:
+            logger.exception("[STEP 5/7] TDB 詳細スクレイピングエラー")
+    elif from_step == 6:
+        # STEP 5 をスキップした場合、保存済み HTML からリストを再構築する
+        tdb_html_results = _collect_tdb_saved_html(conn)
 
     # =========================================================================
     # STEP 6: TDB 詳細パース → DB UPDATE
     # =========================================================================
-    if tdb_html_results:
+    if from_step <= 6 and tdb_html_results:
         logger.info("[STEP 6/7] TDB 詳細パース → DB 更新")
         step_start = time.time()
         try:

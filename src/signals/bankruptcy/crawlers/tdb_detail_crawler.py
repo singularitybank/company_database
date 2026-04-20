@@ -4,49 +4,54 @@
 
 [動作概要]
   1. tdb_cases テーブルから detail_scraped_at IS NULL のレコードを取得
-  2. 各詳細ページを urllib.request + feedparser User-Agent で取得
-  3. 生 HTML を {html_dir}/tdb/{YYYYMMDD}/{case_id}.html に保存
-  4. DetailHtmlResult のリストを返す（パースは parsers 層が行う）
+  2. curl_cffi（Chrome TLS フィンガープリント）で取得を試みる
+  3. 全リトライ失敗時は undetected_chromedriver による Selenium にフォールバック
+  4. 生 HTML を {html_dir}/tdb/{case_id}.html に保存
+  5. DetailHtmlResult のリストを返す（パースは parsers 層が行う）
 
 [取得仕様]
-  - User-Agent : feedparser/6.0.12 ...（requests は SSL 接続拒否される）
-  - SSL 検証   : 無効
-  - エンコード : UTF-8（Remix SSR、<meta charSet="utf-8"> 宣言済み）
-  - リトライ   : config の retry_count 回
-  - 待機       : wait_between_requests + random(0,1) 秒
+  - HTTP   : curl_cffi chrome146 impersonate + Cookie 確立（トップページ訪問）
+  - 待機   : random.uniform(wait_between_requests, wait_between_requests × 2.5) 秒
+  - fallback: undetected_chromedriver（headless は config で制御）
 """
 
 import logging
 import random
-import ssl
 import sys
 import time
-import urllib.request
 from dataclasses import dataclass
-from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[5]))
 from src.config import bankruptcy as _cfg
+from src.common.requests_utils import (
+    DEFAULT_BROWSER_HEADERS,
+    NotFoundError,
+    create_session,
+    fetch,
+)
 
 logger = logging.getLogger(__name__)
+
+# 404 など「存在しないURL」を表すセンチネル（接続エラーの None と区別するため）
+_NOT_FOUND = object()
 
 # ---------------------------------------------------------------------------
 # 定数
 # ---------------------------------------------------------------------------
 
-FEEDPARSER_UA  = "feedparser/6.0.12 +https://github.com/kurtmckee/feedparser/"
-HTML_BASE_DIR  = Path(_cfg["html_dir"]) / "tdb"
-TIMEOUT        = _cfg["timeout"]
-RETRY_COUNT    = _cfg["retry_count"]
-WAIT           = _cfg["wait_between_requests"]
+HTML_BASE_DIR = Path(_cfg["html_dir"]) / "tdb"
+TIMEOUT       = _cfg["timeout"]
+RETRY_COUNT   = _cfg["retry_count"]
+WAIT          = _cfg["wait_between_requests"]
+HEADLESS      = _cfg.get("headless", False)
 
-JST = timezone(timedelta(hours=9))
-
-_SSL_CTX = ssl.create_default_context()
-_SSL_CTX.check_hostname = False
-_SSL_CTX.verify_mode    = ssl.CERT_NONE
+_DETAIL_HEADERS = {
+    **DEFAULT_BROWSER_HEADERS,
+    "Referer": "https://www.tdb.co.jp/",
+    "Sec-Fetch-Site": "same-origin",
+}
 
 # ---------------------------------------------------------------------------
 # データクラス
@@ -57,7 +62,7 @@ class DetailHtmlResult:
     """詳細ページ取得結果 1 件分"""
     case_id:    str
     source_url: str
-    html_path:  Optional[str]   # 保存先パス（取得失敗時は None）
+    html_path:  Optional[str]
     success:    bool
     error:      Optional[str] = None
 
@@ -66,27 +71,78 @@ class DetailHtmlResult:
 # 内部ヘルパー
 # ---------------------------------------------------------------------------
 
-def _fetch_raw(url: str) -> Optional[bytes]:
-    """URL の生バイトを取得して返す。失敗時は None。"""
-    req = urllib.request.Request(url, headers={"User-Agent": FEEDPARSER_UA})
-    for attempt in range(1, RETRY_COUNT + 1):
-        try:
-            with urllib.request.urlopen(req, timeout=TIMEOUT, context=_SSL_CTX) as resp:
-                return resp.read()
-        except Exception as e:
-            logger.warning("取得エラー（試行 %d/%d）%s: %s", attempt, RETRY_COUNT, url, e)
-            if attempt < RETRY_COUNT:
-                time.sleep(2 ** attempt + random.uniform(0, 1))
-    logger.error("取得失敗（%d 回試行）: %s", RETRY_COUNT, url)
-    return None
+def _fetch_http(session, url: str):
+    """curl_cffi セッションで取得。
+
+    Returns:
+        bytes       : 取得成功
+        _NOT_FOUND  : 404（ページが存在しない）
+        None        : 接続エラー等（Selenium fallback が有効なら試みる価値あり）
+    """
+    try:
+        return fetch(session, url, headers=_DETAIL_HEADERS,
+                     retry_count=RETRY_COUNT, timeout=TIMEOUT, wait=WAIT)
+    except NotFoundError:
+        return _NOT_FOUND
+
+
+def _fetch_selenium(url: str, driver_ref: list) -> Optional[bytes]:
+    """Selenium（undetected_chromedriver）で取得。失敗時は None。
+
+    driver_ref[0] にドライバーインスタンスを保持して再利用する。
+    """
+    try:
+        import undetected_chromedriver as uc
+        from selenium.webdriver.support.ui import WebDriverWait
+        from selenium.webdriver.support import expected_conditions as EC
+        from selenium.webdriver.common.by import By
+    except ImportError:
+        logger.error("undetected_chromedriver がインストールされていません")
+        return None
+
+    try:
+        if driver_ref[0] is None:
+            logger.info("Selenium ドライバー初期化")
+            options = uc.ChromeOptions()
+            if HEADLESS:
+                options.add_argument("--headless=new")
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-dev-shm-usage")
+            driver_ref[0] = uc.Chrome(options=options)
+
+        driver = driver_ref[0]
+        driver.get(url)
+        WebDriverWait(driver, TIMEOUT).until(
+            EC.presence_of_element_located((By.TAG_NAME, "body"))
+        )
+        return driver.page_source.encode("utf-8")
+    except Exception as e:
+        logger.warning("Selenium 取得エラー %s: %s", url, e)
+        return None
+
+
+def _fetch_raw(session, driver_ref: list, url: str, selenium_fallback: bool = True) -> Optional[bytes]:
+    """HTTP を試み、接続エラー時に Selenium へフォールバック。
+
+    404（_NOT_FOUND）の場合は Selenium を試みず None を返す。
+    """
+    raw = _fetch_http(session, url)
+    if isinstance(raw, bytes):
+        return raw
+    if raw is _NOT_FOUND:
+        logger.debug("404 Not Found: %s", url)
+        return None
+    # raw is None = 接続エラー → Selenium fallback
+    if not selenium_fallback:
+        return None
+    logger.info("HTTP 失敗（接続エラー）→ Selenium fallback: %s", url)
+    return _fetch_selenium(url, driver_ref)
 
 
 def _save_html(raw: bytes, case_id: str) -> str:
     """生 HTML をファイルに保存してパスを返す。"""
-    date_str = datetime.now(JST).strftime("%Y%m%d")
-    save_dir = HTML_BASE_DIR / date_str
-    save_dir.mkdir(parents=True, exist_ok=True)
-    path = save_dir / f"{case_id}.html"
+    HTML_BASE_DIR.mkdir(parents=True, exist_ok=True)
+    path = HTML_BASE_DIR / f"{case_id}.html"
     path.write_bytes(raw)
     return str(path)
 
@@ -95,45 +151,56 @@ def _save_html(raw: bytes, case_id: str) -> str:
 # メイン処理
 # ---------------------------------------------------------------------------
 
-def scrape(entries: list) -> list[DetailHtmlResult]:
+def scrape(entries: list, selenium_fallback: bool = True) -> list[DetailHtmlResult]:
     """TDB 詳細ページを取得・保存して結果リストを返す。
 
     Args:
-        entries: case_id と source_url を持つオブジェクトのリスト
-                 （TdbRssEntry または case_id/source_url 属性を持つ任意オブジェクト）
+        entries:           case_id と source_url を持つオブジェクトのリスト
+        selenium_fallback: False にすると HTTP 失敗時に Selenium を使わない
 
     Returns:
         DetailHtmlResult のリスト
     """
     results: list[DetailHtmlResult] = []
+    session    = create_session(timeout=TIMEOUT)
+    driver_ref = [None]  # Selenium ドライバーの遅延初期化コンテナ
 
-    for i, entry in enumerate(entries):
-        case_id    = entry.case_id
-        source_url = entry.source_url
+    try:
+        for i, entry in enumerate(entries):
+            case_id    = entry.case_id
+            source_url = entry.source_url
 
-        logger.info("[%d/%d] TDB 詳細取得: %s", i + 1, len(entries), source_url)
+            logger.info("[%d/%d] TDB 詳細取得: %s", i + 1, len(entries), source_url)
 
-        raw = _fetch_raw(source_url)
-        if raw is None:
-            results.append(DetailHtmlResult(
-                case_id    = case_id,
-                source_url = source_url,
-                html_path  = None,
-                success    = False,
-                error      = "fetch failed",
-            ))
-        else:
-            html_path = _save_html(raw, case_id)
-            results.append(DetailHtmlResult(
-                case_id    = case_id,
-                source_url = source_url,
-                html_path  = html_path,
-                success    = True,
-            ))
-            logger.debug("保存: %s", html_path)
+            raw = _fetch_raw(session, driver_ref, source_url, selenium_fallback)
+            if raw is None:
+                results.append(DetailHtmlResult(
+                    case_id    = case_id,
+                    source_url = source_url,
+                    html_path  = None,
+                    success    = False,
+                    error      = "fetch failed",
+                ))
+            else:
+                html_path = _save_html(raw, case_id)
+                results.append(DetailHtmlResult(
+                    case_id    = case_id,
+                    source_url = source_url,
+                    html_path  = html_path,
+                    success    = True,
+                ))
+                logger.debug("保存: %s", html_path)
 
-        if i < len(entries) - 1:
-            time.sleep(WAIT + random.uniform(0, 1))
+            if i < len(entries) - 1:
+                time.sleep(random.uniform(WAIT, WAIT * 2.5))
+
+    finally:
+        if driver_ref[0] is not None:
+            driver_ref[0].quit()
+            # undetected_chromedriver の __del__ が quit() を再呼び出しして
+            # インタープリター終了時に OSError になるのを防ぐ
+            driver_ref[0].quit = lambda: None
+            logger.debug("Selenium ドライバー終了")
 
     ok  = sum(1 for r in results if r.success)
     err = len(results) - ok

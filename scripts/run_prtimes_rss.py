@@ -80,8 +80,8 @@ def main() -> int:
     now_jst  = datetime.now(JST)
     date_str = now_jst.strftime("%Y%m%d")
 
-    # 夜間（22時〜5時 JST）はスキップ
-    NIGHT_START, NIGHT_END = 22, 6
+    # 夜間（22時〜7時 JST）はスキップ
+    NIGHT_START, NIGHT_END = 22, 7
     if not args.force and (now_jst.hour >= NIGHT_START or now_jst.hour < NIGHT_END):
         print(f"[{now_jst.strftime('%H:%M')} JST] 夜間のためスキップ（{NIGHT_START}時〜{NIGHT_END}時）。強制実行は --force を使用してください。")
         return 0

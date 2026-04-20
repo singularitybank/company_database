@@ -32,8 +32,14 @@ NTA・gBizInfoは**名寄せスコア算定時の参照のみ**に使用し、ba
 ### TDB 詳細ページ（例: https://www.tdb.co.jp/report/bankruptcy/flash/5218/）
 
 **レンダリング方式**: SSR（Remix フレームワーク。`window.__remixContext` が埋め込まれているが HTML はサーバーレンダリング済み）
-**取得方法**: `urllib.request` + `User-Agent: feedparser/6.0.12 ...` + SSL検証なし
+**取得方法**: `curl_cffi`（Chrome TLS フィンガープリント）。HTTP 失敗時は `undetected_chromedriver`（Selenium）にフォールバック
 **エンコーディング**: UTF-8（`<meta charSet="utf-8"/>`）。`raw.decode('utf-8')` 後に BeautifulSoup へ渡す
+
+**HTTP取得の仕様**:
+- 通常: `curl_cffi` + `impersonate=chrome146`（ボット検知回避）
+- 404 応答: `NotFoundError` を即 raise してリトライせずスキップ
+- 接続エラー（curl error 35 等）: 設定回数リトライ後 Selenium fallback
+- Selenium fallback は `scrape(selenium_fallback=False)` で無効化可能（バックフィル時に使用）
 
 **HTML要素マッピング**:
 
@@ -44,20 +50,28 @@ NTA・gBizInfoは**名寄せスコア算定時の参照のみ**に使用し、ba
 | TDB企業コード | `p.whitespace-pre-wrap > span.md:hidden` 1行目 `TDB企業コード:` 以降 | `tdb_company_code` |
 | 都道府県・市区町村 | 同span 2行目（正規表現 `^(.+?[都道府県])(.*)` で分割） | `prefecture`, `city` |
 | 事業内容 | 同span 3行目 | `business_description` |
-| 申請種別 | 同span 4行目 | `bankruptcy_type` |
-| 負債額テキスト | 同span 5行目 | `liabilities_text` |
-| 資本金テキスト | `main p`（classなし）1段落目 カッコ内 `資本金` | `body_capital_text` |
-| 詳細住所 | 同カッコ内（資本金の次の項目） | `body_address` |
+| 申請種別 | 「負債」行の直前行（内容ベースで識別） | `bankruptcy_type` |
+| 負債額テキスト | 「負債」で始まる行（内容ベースで識別） | `liabilities_text` |
+| 旧商号 | 本文カッコ内 `旧商号：` 以降（省略される場合あり） | `former_name` |
+| 資本金テキスト | `main p`（classなし）カッコ内 `資本金` | `body_capital_text` |
+| 現住所 | 同カッコ内（資本金の次の項目、`登記面＝` より前） | `body_address` |
+| 登記面住所 | 同カッコ内 `登記面＝` 以降（省略される場合あり） | `body_registered_address` |
 | 代表者名 | 同カッコ内 `代表(社員)?(.+?)氏` | `body_representative` |
 | 従業員数 | 同カッコ内 `従業員\d+名` | `body_employees` |
 | 本文テキスト | `main p`（classなし）全段落 | `body_text` |
 
-**本文カッコ内パターン例**:
-```
-「東京」　（株）The TCG（資本金100万円、台東区元浅草1-6-12、代表三村浩卯氏）は…
-```
-正規表現: `（資本金(.+?)、(.+?)、代表(社員)?(.+?)氏(?:、従業員(\d+)名)?）`
-※ 資本金・住所・代表者の順序は固定。従業員は省略される場合あり。
+**本文カッコ内パターン（対応済み）**:
+
+| パターン | 例 | 備考 |
+|---|---|---|
+| 標準（丸括弧） | `（資本金100万円、台東区元浅草1-6-12、代表三村浩卯氏）` | 最頻出 |
+| 旧商号あり（丸括弧） | `（旧商号：（株）XXX、資本金5000万円、飯能市…、代表清算人○○氏）` | 商号変更後に清算した案件 |
+| 旧商号あり（山括弧） | `＜旧商号：（株）XXX、資本金5000万円、前橋市…、代表清算人○○氏＞` | 山括弧を使う場合あり |
+| 登記面住所あり | `（松戸市…、登記面＝江戸川区…、代表○○氏）` | 現住所と登記面が異なる案件 |
+| 半角括弧混在 | `（資本金100万円、…、代表○○氏)` | 末尾が半角 `)` の場合を正規化 |
+
+※ `清算人`・`管財人`・`破産管財人` 等は代表者名として保存しない（`body_representative = None`）。
+※ 本文カッコ内は `main p`（classなし）の各段落を順に検索し、最初にマッチした段落を採用する。
 
 ### TSR 詳細ページ（実URLパターン: https://www.tsr-net.co.jp/news/tsr/detail/{id}_1521.html）
 
@@ -154,17 +168,20 @@ TDBとTSRは**別テーブルで独立して保存**する。
 |---|---|---|
 | `case_id` | TEXT PK | 詳細URLのSHA-256先頭16文字 |
 | `source_url` | TEXT NOT NULL | 詳細ページURL |
-| `company_name` | TEXT | 社名（RSS `title` から抽出） |
+| `company_name` | TEXT | 社名（RSS `title` または詳細ページ `h1` から抽出） |
 | `tdb_company_code` | TEXT | TDB企業コード（上段ヘッダー） |
 | `prefecture` | TEXT | 都道府県（上段ヘッダー） |
 | `city` | TEXT | 市区町村（上段ヘッダー） |
 | `business_description` | TEXT | 事業内容（上段ヘッダー） |
-| `bankruptcy_type` | TEXT | 申請種別（上段ヘッダー） |
-| `liabilities_text` | TEXT | 負債額テキスト（上段ヘッダー） |
-| `liabilities_amount` | INTEGER | 負債額（万円単位、未実装） |
+| `bankruptcy_type` | TEXT | 申請種別（上段ヘッダー、内容ベースで識別） |
+| `liabilities_text` | TEXT | 負債額テキスト（上段ヘッダー、内容ベースで識別） |
+| `liabilities_amount` | INTEGER | 負債額（万円単位） |
+| `is_followup` | INTEGER | 続報記事フラグ（1=続報） |
+| `former_name` | TEXT | 旧商号（本文カッコ内 `旧商号：` 以降、省略される場合あり） |
 | `body_capital_text` | TEXT | 資本金テキスト（本文カッコ内） |
 | `body_capital_amount` | INTEGER | 資本金（万円単位） |
-| `body_address` | TEXT | 詳細住所（本文カッコ内） |
+| `body_address` | TEXT | 現住所（本文カッコ内、`登記面＝` より前） |
+| `body_registered_address` | TEXT | 登記面住所（本文カッコ内 `登記面＝` 以降、省略される場合あり） |
 | `body_representative` | TEXT | 代表者名（本文カッコ内） |
 | `body_employees` | INTEGER | 従業員数（本文カッコ内） |
 | `published_at` | TEXT | 公開日（RSS `<dc:date>`） |
@@ -179,7 +196,7 @@ TDBとTSRは**別テーブルで独立して保存**する。
 |---|---|---|
 | `case_id` | TEXT PK | 詳細URLのSHA-256先頭16文字 |
 | `source_url` | TEXT NOT NULL | 詳細ページURL |
-| `company_name` | TEXT | 社名（RSS `title` から抽出） |
+| `company_name` | TEXT | 社名（`h1.title_data`、詳細スクレイピング時に設定） |
 | `corporate_number` | TEXT | 法人番号（`div.entry_info_code`、13桁） |
 | `tsr_code` | TEXT | TSRコード（`div.entry_info_code`） |
 | `prefecture` | TEXT | 都道府県（`li.tag_prefecture`） |
@@ -311,7 +328,8 @@ src/signals/bankruptcy/
 scripts/
 ├── run_bankruptcy.py             # 全フロー実行（STEP 1〜7）
 ├── run_bankruptcy.bat            # タスクスケジューラー用
-└── run_bankruptcy_match.py       # 名寄せのみ再実行
+├── run_bankruptcy_match.py       # 名寄せのみ再実行
+└── backfill_tdb.py               # TDB過去記事一括スクレイピング（--start-id / --end-id）
 
 data/
 └── bankruptcy.db                 # 倒産情報専用DB（実運用ファイル）
@@ -325,12 +343,13 @@ logs/
 ```
 C:\Temp\html\bankruptcy\
 ├── tdb\
-│   └── {YYYYMMDD}\
-│       └── {case_id}.html         # TDB詳細ページHTML
+│   └── {case_id}.html             # TDB詳細ページHTML（日付フォルダなし・フラット）
 └── tsr\
     └── {YYYYMMDD}\
         └── {case_id}.html         # TSR詳細ページHTML
 ```
+
+TDB は件数が少ないためフラット構造。TSR は日付フォルダで管理。
 
 ---
 
@@ -339,30 +358,28 @@ C:\Temp\html\bankruptcy\
 | ページ種別 | 描画方式 | 取得方法 | 確認状況 |
 |---|---|---|---|
 | TDB RSS | RDF/XML (UTF-8) | `feedparser.parse(url)` 直接呼び出し | ✅ 確認済み |
-| TDB詳細ページ | **SSR** (Remix) | `urllib.request` + feedparser UA + SSL検証なし | ✅ 確認済み |
+| TDB詳細ページ | **SSR** (Remix) | `curl_cffi` Chrome TLS フィンガープリント + Selenium fallback | ✅ 確認済み |
 | TSR RSS | RSS XML (UTF-8) | `feedparser.parse(url)` 直接呼び出し | ✅ 確認済み |
-| TSR詳細ページ | **SSR** | `urllib.request` + feedparser UA + SSL検証なし | ✅ 確認済み |
+| TSR詳細ページ | **SSR** | `curl_cffi` Chrome TLS フィンガープリント + Selenium fallback | ✅ 確認済み |
 
-**Selenium は不要**（両ページとも SSR 確認済み）。
+### TDB/TSR詳細ページ HTTPクライアント仕様
 
-### 共通HTTPクライアント仕様
+`src/common/requests_utils.py` の `create_session()` / `fetch()` を使用。
 
 ```python
-FEEDPARSER_UA = "feedparser/6.0.12 +https://github.com/kurtmckee/feedparser/"
+from src.common.requests_utils import create_session, fetch, NotFoundError
 
-import ssl, urllib.request
-
-ctx = ssl.create_default_context()
-ctx.check_hostname = False
-ctx.verify_mode = ssl.CERT_NONE
-
-req = urllib.request.Request(url, headers={"User-Agent": FEEDPARSER_UA})
-with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
-    raw = resp.read()
-
-# BeautifulSoupには必ずデコード済み文字列を渡す
-soup = BeautifulSoup(raw.decode("utf-8"), "html.parser")
+session = create_session(timeout=30)   # warm-up なし（高確率で失敗するため廃止）
+raw = fetch(session, url, not_found_codes=(404,))
+# → bytes:          取得成功
+# → None:           接続エラー（リトライ後）→ Selenium fallback へ
+# → NotFoundError:  404（リトライせず即 raise）→ スキップ
 ```
+
+**Selenium fallback**（`undetected_chromedriver`）:
+- HTTP で接続エラー（curl error 35 等）が発生した場合のみ起動
+- 404 は Selenium を試みずスキップ
+- `scrape(selenium_fallback=False)` で無効化可能（バックフィル時に使用）
 
 ---
 
@@ -380,9 +397,20 @@ python scripts/run_bankruptcy.py --no-match
 
 # 名寄せのみ再実行（スクレイピング済みデータに対して）
 python scripts/run_bankruptcy_match.py
+
+# 過去記事の一括バックフィル（--end-id から --start-id へ降順スキャン）
+python scripts/backfill_tdb.py --end-id 5220 --start-id 5100
 ```
 
 **推奨実行頻度**: 毎日1回（平日更新が多いが土日分も翌日蓄積される）
+
+### バックフィルの動作
+
+- `--end-id` から `--start-id` へ**降順**（最新優先）でスキャン
+- HTML ファイル存在 or `detail_scraped_at IS NOT NULL` の案件はスキップ
+- 404 はデバッグログのみ、静かにスキップ
+- 接続エラー（ボット検知等）は Selenium fallback を試みる
+- リクエスト間隔は通常バッチと同じ `wait_between_requests`（ランダム係数あり）
 
 ---
 
@@ -400,7 +428,11 @@ python scripts/run_bankruptcy_match.py
 
 ### 3. TDB本文カッコ内パターンの揺れ
 - 従業員数は省略される場合がある（`body_employees = None`）
-- **対応済み**: 正規表現 `(?:、従業員(\d+)名)?` でオプション扱い
+- 旧商号（`旧商号：（株）XXX、`）が含まれる場合がある → `former_name` カラムに保存
+- 丸括弧 `（）` の他に山括弧 `＜＞` を使う場合がある
+- 現住所と登記面住所が両方含まれる場合がある（`登記面＝` で分離し `body_registered_address` に保存）
+- 半角括弧 `()` が混在する場合がある（パース前に全角に正規化）
+- **対応済み**: 上記すべてのパターンをパーサーで処理
 
 ### 4. 同名別会社の誤マッチ
 - 都道府県不一致の場合は突合対象から除外
@@ -415,14 +447,16 @@ python scripts/run_bankruptcy_match.py
 ## 依存ライブラリ
 
 ```
-feedparser>=6.0      # RSS/RDF パース
-beautifulsoup4       # HTML パース
-rapidfuzz>=3.0       # 社名あいまい一致スコアリング
+feedparser>=6.0            # RSS/RDF パース
+beautifulsoup4             # HTML パース
+rapidfuzz>=3.0             # 社名あいまい一致スコアリング
+curl_cffi                  # Chrome TLS フィンガープリント HTTP クライアント
+undetected_chromedriver    # Selenium fallback（HTTP 接続エラー時のみ使用）
 ```
 
 `requests` は TDB・TSR ともに SSL 接続拒否されるため使用しない。
-詳細ページ取得は標準ライブラリの `urllib.request` + feedparser User-Agent で対応済み。
-Selenium は両サイトとも SSR 確認済みのため不要。
+詳細ページ取得は `curl_cffi`（Chrome TLS フィンガープリント）で対応。
+HTTP で接続エラーが起きた場合のみ `undetected_chromedriver` による Selenium fallback を使用する。
 
 ---
 
@@ -437,11 +471,13 @@ Selenium は両サイトとも SSR 確認済みのため不要。
 | 5 | `parsers/tsr_detail_parser.py` | TSR上段タグ・法人番号・`※`フッターノート解析 | ✅ 完了 |
 | 6 | `crawlers/tdb_rss_crawler.py` | TDB RSS取得・TdbRssEntry返却 | ✅ 完了 |
 | 7 | ~~`parsers/tdb_rss_parser.py`~~ | RSSパースはcrawlerに統合済み | ~~省略~~ |
-| 8 | `crawlers/tdb_detail_crawler.py` | TDB詳細ページHTML取得・保存 | ✅ 完了 |
-| 9 | `parsers/tdb_detail_parser.py` | TDB上段ヘッダー解析・本文カッコ内抽出 | ✅ 完了 |
+| 8 | `crawlers/tdb_detail_crawler.py` | TDB詳細ページHTML取得・保存（curl_cffi + Selenium fallback・フラット保存） | ✅ 完了 |
+| 9 | `parsers/tdb_detail_parser.py` | TDB上段ヘッダー解析・本文カッコ内抽出（旧商号・登記面住所・山括弧・半角括弧対応） | ✅ 完了 |
 | 10 | `loaders/db_loader.py` | INSERT/UPDATE・未スクレイピング取得・RSSログ記録 | ✅ 完了 |
 | 11 | `matchers/name_matcher.py` | 複合スコア名寄せ・bankruptcy_matches登録 | ✅ 完了 |
 | 12 | `scripts/run_bankruptcy.py` + `.bat` | 全フロー実行（STEP 1〜7）・タスクスケジューラー登録 | ✅ 完了 |
 | 13 | `scripts/run_bankruptcy_match.py` | 名寄せ単独実行 | ✅ 完了 |
 | 14 | TSR/TDBページのレンダリング方式確認 | 実ページ取得・Selenium要否判定 | ✅ 完了 |
 | 15 | `liabilities_amount` 数値パース | `liabilities_text` → 万円単位整数 | ✅ 完了 |
+| 16 | `common/requests_utils.py` | `NotFoundError` + `not_found_codes` 対応（404 と接続エラーの区別） | ✅ 完了 |
+| 17 | `scripts/backfill_tdb.py` | TDB過去記事一括バックフィル（`--start-id` / `--end-id`） | ✅ 完了 |

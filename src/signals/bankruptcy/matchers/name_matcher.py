@@ -92,33 +92,39 @@ def normalize_name(name: Optional[str]) -> str:
 
 def _load_nta(companies_db: str, corporate_number: str) -> dict:
     """NTA法人情報を返す。なければ空dict。"""
+    conn = None
     try:
         conn = sqlite3.connect(f"file:{companies_db}?mode=ro", uri=True)
         row = conn.execute(
             "SELECT address, representative_name FROM companies WHERE corporate_number = ?",
             (corporate_number,),
         ).fetchone()
-        conn.close()
         if row:
             return {"address": row[0], "rep": row[1]}
     except Exception as e:
         logger.debug("NTA参照エラー: %s", e)
+    finally:
+        if conn:
+            conn.close()
     return {}
 
 
 def _load_gbiz(gbizinfo_db: str, corporate_number: str) -> dict:
     """gBizInfo資本金情報を返す。なければ空dict。"""
+    conn = None
     try:
         conn = sqlite3.connect(f"file:{gbizinfo_db}?mode=ro", uri=True)
         row = conn.execute(
             "SELECT capital_amount FROM gbizinfo WHERE corporate_number = ?",
             (corporate_number,),
         ).fetchone()
-        conn.close()
         if row and row[0] is not None:
             return {"capital_amount": row[0]}
     except Exception as e:
         logger.debug("gBizInfo参照エラー: %s", e)
+    finally:
+        if conn:
+            conn.close()
     return {}
 
 

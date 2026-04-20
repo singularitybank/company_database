@@ -123,7 +123,7 @@ def fetch_rss() -> list[TsrRssEntry]:
         entry = TsrRssEntry(
             case_id        = _make_case_id(url),
             source_url     = url,
-            company_name   = e.get("title") or None,
+            company_name   = None,  # h1.title_data から detail scraping 時に設定
             published_at   = _updated_parsed_to_jst(e.get("updated_parsed")),
             summary        = _strip_html(e.get("summary")),
             rss_fetched_at = fetched_at,
