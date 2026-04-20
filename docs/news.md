@@ -199,12 +199,12 @@ CREATE TABLE IF NOT EXISTS google_news_keywords (
 );
 
 CREATE TABLE IF NOT EXISTS google_news_articles (
-    article_id    TEXT PRIMARY KEY,   -- SHA256(link)[:16]
+    article_id    TEXT PRIMARY KEY,   -- SHA256(デコード済みlink)[:16]
     keyword_id    INTEGER NOT NULL,
     keyword       TEXT NOT NULL,      -- 検索時のキーワード（非正規化で保持）
     title         TEXT NOT NULL,
     source_name   TEXT,               -- entry.source['title']（「NHK」「読売新聞」等）
-    link          TEXT NOT NULL,      -- Google Newsリダイレクト URL
+    link          TEXT NOT NULL,      -- 元記事URL（Googleリダイレクト解決済み）
     published_at  TEXT,               -- JST ISO8601
     summary       TEXT,
     fetched_at    TEXT NOT NULL,
@@ -226,16 +226,28 @@ CREATE TABLE IF NOT EXISTS google_news_fetch_log (
 ```python
 @dataclass
 class GoogleNewsEntry:
-    article_id:   str           # SHA256(link)[:16]
+    article_id:   str           # SHA256(デコード済みlink)[:16]
     keyword_id:   int
     keyword:      str
     title:        str
     source_name:  Optional[str] # entry.source.get('title') — 配信元メディア名
-    link:         str           # Google Newsリダイレクト URL
+    link:         str           # 元記事URL（Googleリダイレクト解決済み）
     published_at: Optional[str]
     summary:      Optional[str]
     fetched_at:   str
 ```
+
+### Google NewsのリダイレクトURL解決と重複排除（必須要件）
+
+Google News RSSが提供する `<link>` は、元記事のURLではなく `https://news.google.com/rss/articles/...` という暗号化されたリダイレクトURLになっています。
+これをそのまま使用すると、Google側でURLパラメータが変わった際に**同一記事が重複登録される**問題が生じます。
+
+**対策方針:**
+1. RSSから取得したリダイレクトURLをデコード（またはHEADリクエストでリダイレクト先を取得）し、**実際のメディアの元記事URL**（例: `https://news.yahoo.co.jp/...`）を抽出します。
+2. 抽出した元記事URLを `GoogleNewsEntry.link` として保存します。
+3. `article_id` の生成（SHA256）にも、この「解決済みの元記事URL」を使用し、確実な重複排除を実現します。
+
+※URL解決には、`requests.head(url, allow_redirects=True)` によるリダイレクト追跡、あるいは専用のデコードロジック（例: サードパーティのURLデコードライブラリ）を活用します。リダイレクト追跡を行う場合は、通信遅延を考慮して適切なタイムアウトを設定してください。
 
 ---
 

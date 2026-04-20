@@ -15,6 +15,8 @@
 | [ハローワークインターネットサービス](docs/hellowork.md) | Seleniumクローリング（日次） | 毎日 | `data/staging/hellowork_YYYYMMDD.parquet` |
 | [PR Times](docs/prtimes.md) | RSS + Seleniumクローリング（1時間毎） | 毎時 | `data/prtimes.db` |
 | [倒産情報（帝国データバンク・東京商工リサーチ）](docs/bankruptcy.md) | RSS + Webスクレイピング（毎日） | 平日随時 | `data/bankruptcy.db` |
+| [ニュースRSS（NHK・Yahoo・日経など10ソース）](docs/news.md) | RSS収集（1時間毎） | 毎時 | `data/news.db` |
+| [Google Newsキーワード収集](docs/news.md) | キーワード検索RSS（1時間毎） | 毎時 | `data/google_news.db` |
 
 ---
 
@@ -164,6 +166,44 @@ python scripts/run_bankruptcy_match.py
 
 ---
 
+### ニュースRSS（1時間毎）
+
+```bash
+# 全10ソース実行
+python scripts/run_news_rss.py
+
+# 夜間スキップ無効
+python scripts/run_news_rss.py --force
+
+# 特定ソースのみ（デバッグ用）
+python scripts/run_news_rss.py --source yahoo_domestic --force
+```
+
+**Windowsタスクスケジューラーへの登録:** `scripts/run_news_rss.bat` から呼び出す。トリガー: 毎日00:00から1時間おきに繰り返す。
+
+詳細は [docs/news.md](docs/news.md) を参照。
+
+---
+
+### Google Newsキーワード収集（1時間毎）
+
+```bash
+# キーワード追加
+python scripts/run_google_news.py --add-keyword "工場火災"
+
+# キーワード無効化
+python scripts/run_google_news.py --disable-keyword "工場火災"
+
+# 全キーワード実行
+python scripts/run_google_news.py --force
+```
+
+**Windowsタスクスケジューラーへの登録:** `scripts/run_google_news.bat` から呼び出す。トリガー: 毎日00:00から1時間おきに繰り返す。
+
+詳細は [docs/news.md](docs/news.md) を参照。
+
+---
+
 ## データ構造
 
 ### DB一覧
@@ -175,6 +215,8 @@ python scripts/run_bankruptcy_match.py
 | `data/shokuba.db` | `shokuba_basic`, `shokuba_work_hours` 他8テーブル | 約60万件 |
 | `data/prtimes.db` | `prtimes_companies`, `prtimes_articles`, `rss_fetch_log` | 累積増加 |
 | `data/bankruptcy.db` | `tdb_cases`, `tsr_cases`, `bankruptcy_matches` | 累積増加 |
+| `data/news.db` | `news_articles`, `rss_fetch_log` | 累積増加 |
+| `data/google_news.db` | `google_news_keywords`, `google_news_articles`, `google_news_fetch_log` | 累積増加 |
 
 ### データ結合例
 
@@ -224,20 +266,26 @@ company_database/
 │   └── signals/        # シグナル系データ処理（日々発生するイベント等）
 │       ├── bankruptcy/     # 倒産情報（TDB・TSR）
 │       ├── hellowork/      # ハローワーク求人情報
-│       └── prtimes/        # PR Timesプレスリリース・企業情報
+│       ├── prtimes/        # PR Timesプレスリリース・企業情報
+│       ├── news/           # ニュースRSS（NHK・Yahoo・日経など10ソース）
+│       └── google_news/    # Google Newsキーワード収集
 ├── scripts/            # 実行エントリーポイント
 ├── data/
 │   ├── companies.db
 │   ├── gbizinfo.db
 │   ├── shokuba.db
 │   ├── prtimes.db
-│   ├── bankruptcy.db   # 倒産情報DB
+│   ├── bankruptcy.db
+│   ├── news.db         # ニュース記事DB
+│   ├── google_news.db  # Google Newsキーワード収集DB
 │   ├── raw/            # 生データ（CSV/JSON）
 │   └── staging/        # Parquet中間ストア
 ├── logs/
 │   ├── hellowork/      # ハローワーク実行ログ（日付別）
 │   ├── prtimes/        # PR Times実行ログ（日付別）
 │   ├── bankruptcy/     # 倒産情報実行ログ（日付別）
+│   ├── news/           # ニュースRSSログ（日付別）
+│   ├── google_news/    # Google Newsログ（日付別）
 │   └── *.log           # その他ログ
 └── docs/               # 詳細仕様ドキュメント
 ```
@@ -255,3 +303,4 @@ company_database/
 | [docs/hellowork.md](docs/hellowork.md) | ハローワーク詳細仕様・出力カラム一覧 |
 | [docs/prtimes.md](docs/prtimes.md) | PR Times詳細仕様・DB設計・バッチ構成 |
 | [docs/bankruptcy.md](docs/bankruptcy.md) | 倒産情報（TDB・TSR）詳細仕様・名寄せロジック |
+| [docs/news.md](docs/news.md) | ニュースRSS・Google Newsキーワード収集詳細仕様 |

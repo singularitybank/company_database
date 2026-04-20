@@ -87,3 +87,47 @@ bankruptcy:
 
   # 名寄せ：候補登録の下限閾値（点）
   match_threshold_candidate: 70
+
+# ------------------------------------------------------------
+# ニュース（通常RSS 10ソース）
+# ------------------------------------------------------------
+news:
+  db_path: "data/news.db"
+  sources:
+    - { key: nhk,              display_name: "NHK社会",       url: "https://www.nhk.or.jp/rss/news/cat1.xml",                   category: domestic }
+    - { key: 47news_national,  display_name: "47NEWS全国社会", url: "https://assets.wor.jp/rss/rdf/ynnews/national.rdf",         category: domestic }
+    - { key: 47news_local,     display_name: "47NEWS地域社会", url: "https://assets.wor.jp/rss/rdf/ynlocalnews/national.rdf",    category: local    }
+    - { key: yahoo_domestic,   display_name: "Yahoo国内",      url: "https://news.yahoo.co.jp/rss/categories/domestic.xml",      category: domestic }
+    - { key: yahoo_local,      display_name: "Yahoo地域",      url: "https://news.yahoo.co.jp/rss/categories/local.xml",         category: local    }
+    - { key: nikkei_society,   display_name: "日経社会",       url: "https://assets.wor.jp/rss/rdf/nikkei/society.rdf",          category: domestic }
+    - { key: nikkei_local,     display_name: "日経地域",       url: "https://assets.wor.jp/rss/rdf/nikkei/local.rdf",            category: local    }
+    - { key: sankei_affairs,   display_name: "産経社会",       url: "https://assets.wor.jp/rss/rdf/sankei/affairs.rdf",          category: domestic }
+    - { key: yomiuri_national, display_name: "読売社会",       url: "https://assets.wor.jp/rss/rdf/yomiuri/national.rdf",        category: domestic }
+    - { key: asahi_national,   display_name: "朝日社会",       url: "https://www.asahi.com/rss/asahi/national.rdf",              category: domestic }
+  night_skip:
+    enabled: true
+    start_hour: 22
+    end_hour: 7
+  request:
+    timeout: 30
+    retry_count: 3
+    wait_between_sources: 2.0
+
+# ------------------------------------------------------------
+# Google News キーワード収集
+# ------------------------------------------------------------
+google_news:
+  db_path: "data/google_news.db"
+  base_url: "https://news.google.com/rss/search"
+  params:
+    hl: "ja"
+    gl: "JP"
+    ceid: "JP:ja"
+  night_skip:
+    enabled: true
+    start_hour: 22
+    end_hour: 7
+  request:
+    timeout: 30
+    retry_count: 3
+    wait_between_keywords: 3.0

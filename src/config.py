@@ -42,9 +42,11 @@ _yaml_cfg = _load_yaml()
 # ハローワーク設定
 # ---------------------------------------------------------------------------
 
-hellowork:  dict = _yaml_cfg["hellowork"]
-prtimes:    dict = _yaml_cfg["prtimes"]
-bankruptcy: dict = _yaml_cfg["bankruptcy"]
+hellowork:   dict = _yaml_cfg["hellowork"]
+prtimes:     dict = _yaml_cfg["prtimes"]
+bankruptcy:  dict = _yaml_cfg["bankruptcy"]
+news:        dict = _yaml_cfg["news"]
+google_news: dict = _yaml_cfg["google_news"]
 
 # ---------------------------------------------------------------------------
 # NTA 設定
