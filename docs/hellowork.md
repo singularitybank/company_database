@@ -2,13 +2,13 @@
 
 **対象サイト:** ハローワークインターネットサービス  
 **取得方法:** Selenium（Microsoft Edge）によるスクレイピング  
-**最終更新:** 2026-04-12
+**最終更新:** 2026-04-23
 
 ---
 
 ## 1. 概要
 
-ハローワーク（公共職業安定所）が公開する求人情報を毎日自動収集し、Parquetファイルとして蓄積する。
+ハローワーク（公共職業安定所）が公開する求人情報を毎日自動収集し、SQLiteデータベースに蓄積する。
 
 ### 処理フロー
 
@@ -31,6 +31,9 @@ STEP 2: 詳細HTMLダウンロード（scrape_details）
 
 STEP 3: Parquet変換（parse_to_parquet）
   HTMLファイル群 → data/staging/hellowork_YYYYMMDD.parquet
+
+STEP 4: DB投入（load_parquet）
+  Parquet → data/hellowork.db（job_postings テーブル・INSERT OR REPLACE）
 ```
 
 ---
@@ -40,20 +43,29 @@ STEP 3: Parquet変換（parse_to_parquet）
 ```
 company_database/
 ├── config/
-│   └── config.yaml              # パス・タイミング設定（★変更はここで）
+│   └── config.yaml                    # パス・タイミング設定（★変更はここで）
 ├── data/
+│   ├── hellowork.db                   # SQLiteデータベース（主ストア）
 │   └── staging/
-│       └── hellowork_YYYYMMDD.parquet   # 解析済みデータ（主ストア）
+│       ├── hellowork/
+│       │   └── hellowork_YYYYMMDD.parquet  # 解析済み中間データ（新形式）
+│       └── hellowork_YYYYMMDD.parquet      # 解析済み中間データ（旧形式）
 ├── logs/
-│   └── hellowork_YYYYMMDD.log   # 実行ログ（日付別）
+│   └── hellowork/
+│       └── hellowork_YYYYMMDD.log     # 実行ログ（日付別）
 ├── scripts/
-│   ├── run_hellowork.py         # バッチエントリーポイント
-│   └── run_hellowork.bat        # タスクスケジューラ用バッチ
+│   ├── run_hellowork.py               # 日次バッチエントリーポイント（STEP 1-4）
+│   ├── load_hellowork_to_db.py        # バックフィル用（既存Parquet → DB一括投入）
+│   └── run_hellowork.bat              # タスクスケジューラ用バッチ
 └── src/
-    ├── crawlers/
-    │   └── hellowork_crawler.py # Seleniumクローラー
-    └── parsers/
-        └── hellowork_parser.py  # HTMLパーサー → Parquet変換
+    └── signals/
+        └── hellowork/
+            ├── crawler.py             # Seleniumクローラー
+            ├── parser.py              # HTMLパーサー → Parquet変換
+            ├── models/
+            │   └── schema.py          # DDL・インデックス定義・init_db()
+            └── loaders/
+                └── db_loader.py       # Parquet → SQLite ローダー
 ```
 
 ### 生HTMLの保存場所
@@ -67,7 +79,7 @@ company_database/
 ```
 
 > **注意:** Cドライブの容量節約のため、定期的に外付けHDDへ手動移動する。  
-> 移動後も Parquet ファイルが手元にあれば分析に支障はない。  
+> 移動後も hellowork.db が手元にあれば分析に支障はない。  
 > パス変更は `config/config.yaml` の `html_dir` を修正すること。
 
 ---
@@ -90,13 +102,13 @@ hellowork:
 
 ## 4. 実行方法
 
-### 手動実行
+### 日次バッチ（通常運用）
 
 ```bash
 # 環境を有効化
 conda activate data
 
-# 通常（当日分・フルフロー）
+# 通常（当日分・フルフロー STEP 1-4）
 python scripts/run_hellowork.py
 
 # 日付指定
@@ -105,7 +117,7 @@ python scripts/run_hellowork.py --date 2026-04-10
 # ヘッドレスモード（ブラウザウィンドウ非表示）
 python scripts/run_hellowork.py --headless
 
-# HTMLが既にある場合のParquet変換のみ
+# HTMLが既にある場合：Parquet変換 + DB投入のみ（STEP 3-4）
 python scripts/run_hellowork.py --date 2026-04-10 --skip-crawl
 ```
 
@@ -115,7 +127,19 @@ python scripts/run_hellowork.py --date 2026-04-10 --skip-crawl
 |---|---|---|
 | `--date YYYY-MM-DD` | 当日 | 処理対象の日付 |
 | `--headless` | なし | ブラウザを非表示で起動 |
-| `--skip-crawl` | なし | STEP 1（求人番号収集）と STEP 2（HTMLダウンロード）をスキップし、既存HTMLのParquet変換のみ実行 |
+| `--skip-crawl` | なし | STEP 1-2（クロール）をスキップし、既存HTMLのParquet変換 + DB投入のみ実行 |
+
+### バックフィル（既存Parquetの一括取り込み）
+
+`data/staging/` 以下の全 Parquet ファイルを `hellowork.db` に一括投入する。
+
+```bash
+# 全Parquetを投入（初回セットアップ・DB再構築時）
+python scripts/load_hellowork_to_db.py
+
+# 特定日付のみ投入
+python scripts/load_hellowork_to_db.py --date 2026-04-10
+```
 
 ### クロール仕様（STEP 1 & 2）
 
@@ -160,7 +184,7 @@ python scripts/run_hellowork.py --date 2026-04-10 --skip-crawl
    | 作業フォルダ | `C:\Users\singu\github\company_database` |
 
 4. **動作確認**  
-   タスク右クリック →「実行」→ `logs/hellowork_YYYYMMDD.log` でSTEP1〜3の完了を確認
+   タスク右クリック →「実行」→ `logs/hellowork/hellowork_YYYYMMDD.log` でSTEP1〜4の完了を確認
 
 > **headlessモードについて**  
 > バッチファイル（`run_hellowork.bat`）には `--headless` を指定済み。  
@@ -170,7 +194,7 @@ python scripts/run_hellowork.py --date 2026-04-10 --skip-crawl
 
 ## 6. 外付けHDDへのHTML移動手順
 
-Parquet変換が完了した日付のHTMLは外付けHDDに移動できる。
+Parquet変換・DB投入が完了した日付のHTMLは外付けHDDに移動できる。
 
 ```
 移動元: C:\Temp\html\YYYYMMDD\
@@ -182,47 +206,68 @@ Parquet変換が完了した日付のHTMLは外付けHDDに移動できる。
 
 ---
 
-## 7. 出力データ仕様（Parquet）
+## 7. 出力データ仕様
 
-### ファイル
+### SQLiteデータベース（主ストア）
 
 | 項目 | 内容 |
 |---|---|
-| パス | `data/staging/hellowork_YYYYMMDD.parquet` |
-| 行数 | 当日の求人数（例：約5,000〜6,000件/日） |
-| 列数 | 219列（217フィールド + `fetched_date` + `source_file`） |
-| エンジン | pyarrow |
+| パス | `data/hellowork.db` |
+| テーブル | `job_postings` |
+| 主キー | `job_number`（同一求人番号は最新内容で上書き） |
+| 行数 | 全期間の求人数（例：約13万件） |
+| インデックス | `corporate_number`, `establishment_number`, `received_date`, `expiry_date`, `fetched_date` |
 
-### 読み込み例
+#### 読み込み例
 
 ```python
+import sqlite3
 import pandas as pd
 
-df = pd.read_parquet("data/staging/hellowork_20260410.parquet")
-print(df.shape)          # (6262, 219)
-print(df.columns.tolist())
+conn = sqlite3.connect("data/hellowork.db")
+
+# 全件取得
+df = pd.read_sql("SELECT * FROM job_postings", conn)
+print(df.shape)
 
 # 法人番号でNTA企業情報と結合
-import sqlite3
-conn = sqlite3.connect("data/companies.db")
-companies = pd.read_sql("SELECT * FROM companies", conn)
+companies = pd.read_sql("SELECT * FROM companies", sqlite3.connect("data/companies.db"))
 merged = df.merge(companies, on="corporate_number", how="left")
+
+# 日付・条件を絞って取得（大量データ時に推奨）
+df = pd.read_sql(
+    "SELECT * FROM job_postings WHERE fetched_date = '20260422'",
+    conn,
+)
+conn.close()
 ```
 
-### カラム一覧
+### Parquetファイル（中間データ）
+
+| 項目 | 内容 |
+|---|---|
+| パス | `data/staging/hellowork/hellowork_YYYYMMDD.parquet` |
+| 行数 | 当日の求人数（例：約13,000〜21,000件/日） |
+| 列数 | 220列（219フィールド + `fetched_date`） |
+| エンジン | pyarrow |
+
+---
+
+## 8. カラム一覧（job_postings）
 
 #### メタ情報
 
 | カラム名 | 説明 |
 |---|---|
+| `job_number` | 求人番号（主キー） |
 | `fetched_date` | クロール日（YYYYMMDD） |
 | `source_file` | 元HTMLファイル名 |
+| `loaded_at` | DB投入日時（UTC） |
 
 #### 求人基本情報
 
 | カラム名 | 日本語名 | HTML ID |
 |---|---|---|
-| `job_number` | 求人番号 | ID_kjNo |
 | `received_date` | 受付年月日 | ID_uktkYmd |
 | `expiry_date` | 受付期限日 | ID_shkiKigenHi |
 | `hello_work_office` | 受理安定所 | ID_juriAtsh |
@@ -477,7 +522,7 @@ merged = df.merge(companies, on="corporate_number", how="left")
 
 ---
 
-## 8. トラブルシューティング
+## 9. トラブルシューティング
 
 ### クロールが止まる・途中で終了する
 
@@ -485,7 +530,7 @@ merged = df.merge(companies, on="corporate_number", how="left")
 HTMLダウンロード（STEP 2）も既存HTMLをスキップして続きから再開される。  
 再実行するだけで中断箇所から継続できる。
 
-HTML収集済みで Parquet 変換のみ必要な場合は `--skip-crawl` を使う。
+HTML収集済みで Parquet変換 + DB投入のみ必要な場合は `--skip-crawl` を使う。
 
 ```bash
 python scripts/run_hellowork.py --date 2026-04-10 --skip-crawl
@@ -499,18 +544,27 @@ python scripts/run_hellowork.py --date 2026-04-10 --skip-crawl
 
 `config.yaml` の `wait_between_pages` / `wait_between_details` を大きくする（例：`3.0` / `2.0`）。
 
-### HTMLファイルは増えているがParquetが古い
+### HTMLファイルは増えているがDBが古い
 
-`--skip-crawl` で Parquet のみ再生成する。
+`--skip-crawl` で Parquet変換 + DB投入を再実行する。
 
 ```bash
 python scripts/run_hellowork.py --date 2026-04-10 --skip-crawl
 ```
 
+### DBを一から再構築したい
+
+`data/hellowork.db` を削除してからバックフィルスクリプトを実行する。
+
+```bash
+# hellowork.db を削除してから
+python scripts/load_hellowork_to_db.py
+```
+
 ### ログの確認
 
 ```
-logs/hellowork_YYYYMMDD.log
+logs/hellowork/hellowork_YYYYMMDD.log
 ```
 
-STEP 1〜3 の完了・件数・所要時間が記録されている。エラーは `[ERROR]` または `[WARNING]` で検索。
+STEP 1〜4 の完了・件数・所要時間が記録されている。エラーは `[ERROR]` または `[WARNING]` で検索。

@@ -6,6 +6,7 @@
   STEP 1: 求人番号収集      crawl()
   STEP 2: 詳細HTML保存      scrape_details()
   STEP 3: Parquet変換       parse_to_parquet()
+  STEP 4: DB投入            load_parquet() → hellowork.db
 
 [実行方法]
   # 通常（当日分）
@@ -31,10 +32,13 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.config import hellowork as _cfg
+from src.config import hellowork as _cfg, DATA_DIR
 from src.signals.hellowork.crawler import build_driver, crawl, scrape_details
 from src.common.logging_setup import setup_logging
 from src.signals.hellowork.parser import parse_to_parquet
+from src.signals.hellowork.models.schema import init_db
+from src.signals.hellowork.loaders.db_loader import load_parquet
+from src.common.db_utils import configure_for_bulk_load
 
 
 # ---------------------------------------------------------------------------
@@ -110,21 +114,38 @@ def main() -> int:
         )
 
     # ── STEP 3: Parquet変換 ──────────────────────────────────────────────────
-    logger.info("[STEP 3/3] Parquet変換 開始: %s", html_dir)
+    logger.info("[STEP 3/4] Parquet変換 開始: %s", html_dir)
 
     if not html_dir.exists():
-        logger.error("[STEP 3/3] HTMLディレクトリが存在しません: %s", html_dir)
+        logger.error("[STEP 3/4] HTMLディレクトリが存在しません: %s", html_dir)
         return 1
 
     try:
         step_start = time.time()
         out_path = parse_to_parquet(html_dir, staging_dir)
         logger.info(
-            "[STEP 3/3] Parquet変換完了: %s (%.1f分)",
+            "[STEP 3/4] Parquet変換完了: %s (%.1f分)",
             out_path.name, (time.time() - step_start) / 60,
         )
     except Exception:
-        logger.exception("[STEP 3/3] Parquet変換中にエラーが発生しました")
+        logger.exception("[STEP 3/4] Parquet変換中にエラーが発生しました")
+        return 1
+
+    # ── STEP 4: DB投入 ───────────────────────────────────────────────────────
+    logger.info("[STEP 4/4] DB投入 開始: %s", out_path.name)
+    try:
+        step_start = time.time()
+        db_path = DATA_DIR / "hellowork.db"
+        conn = init_db(db_path)
+        configure_for_bulk_load(conn)
+        count = load_parquet(conn, out_path)
+        conn.close()
+        logger.info(
+            "[STEP 4/4] DB投入完了: %d件 (%.1f分)",
+            count, (time.time() - step_start) / 60,
+        )
+    except Exception:
+        logger.exception("[STEP 4/4] DB投入中にエラーが発生しました")
         return 1
 
     elapsed = time.time() - batch_start
