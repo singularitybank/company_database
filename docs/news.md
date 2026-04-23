@@ -15,7 +15,7 @@
 
 | key | 媒体 | カテゴリ | フォーマット | URL | description |
 |-----|------|---------|------------|-----|-------------|
-| nhk | NHK社会 | domestic | RSS 2.0 | https://www.nhk.or.jp/rss/news/cat1.xml | 要確認 |
+| nhk | NHK社会 | domestic | RSS 2.0 | https://www.nhk.or.jp/rss/news/cat1.xml | ✅ あり |
 | 47news_national | 47NEWS全国社会 | domestic | RDF 1.0 | https://assets.wor.jp/rss/rdf/ynnews/national.rdf | ❌ 空 |
 | 47news_local | 47NEWS地域社会 | local | RSS 2.0 | https://assets.wor.jp/rss/rdf/ynlocalnews/national.rdf | ✅ あり |
 | yahoo_domestic | Yahoo!国内 | domestic | RSS 2.0 | https://news.yahoo.co.jp/rss/categories/domestic.xml | ✅ あり |
@@ -24,7 +24,7 @@
 | nikkei_local | 日経地域 | local | RDF 1.0 | https://assets.wor.jp/rss/rdf/nikkei/local.rdf | ❌ 空 |
 | sankei_affairs | 産経社会 | domestic | RDF 1.0 | https://assets.wor.jp/rss/rdf/sankei/affairs.rdf | ❌ 空 |
 | yomiuri_national | 読売社会 | domestic | RDF 1.0 | https://assets.wor.jp/rss/rdf/yomiuri/national.rdf | ❌ 空 |
-| asahi_national | 朝日社会 | domestic | RDF 1.0 | https://www.asahi.com/rss/asahi/national.rdf | 要確認 |
+| asahi_national | 朝日社会 | domestic | RDF 1.0 | https://www.asahi.com/rss/asahi/national.rdf | ❌ 空 |
 
 **フィード別フィールド差異:**
 
@@ -68,7 +68,7 @@ src/signals/news/
 ├── crawlers/
 │   └── rss_crawler.py      # NewsRssEntry dataclass + fetch_rss()
 └── loaders/
-    └── db_loader.py        # load_entries() + log_fetch()
+    └── db_loader.py        # insert_articles() + log_rss_fetch()
 
 scripts/
 └── run_news_rss.py
@@ -98,10 +98,16 @@ CREATE TABLE IF NOT EXISTS rss_fetch_log (
     fetch_id      INTEGER PRIMARY KEY AUTOINCREMENT,
     source        TEXT NOT NULL,
     fetched_at    TEXT NOT NULL,
-    article_count INTEGER DEFAULT 0,
-    new_count     INTEGER DEFAULT 0,
+    article_count INTEGER NOT NULL DEFAULT 0,
+    new_count     INTEGER NOT NULL DEFAULT 0,
     error         TEXT
 );
+
+-- インデックス
+CREATE INDEX IF NOT EXISTS idx_news_source      ON news_articles (source);
+CREATE INDEX IF NOT EXISTS idx_news_published   ON news_articles (published_at);
+CREATE INDEX IF NOT EXISTS idx_news_category    ON news_articles (category);
+CREATE INDEX IF NOT EXISTS idx_fetch_log_source ON rss_fetch_log (source, fetched_at);
 ```
 
 ---
@@ -113,11 +119,11 @@ CREATE TABLE IF NOT EXISTS rss_fetch_log (
 class NewsRssEntry:
     article_id:   str           # SHA256(source_url)[:16]
     source:       str
-    source_url:   str           # RDF: entry.id (rdf:about), RSS 2.0: entry.link
+    source_url:   str           # entry.link または entry.id (rdf:about)
     title:        str
-    published_at: Optional[str] # JST変換済み
+    published_at: Optional[str] # JST変換済み "YYYY-MM-DD HH:MM:SS"
     summary:      Optional[str] # RSS 2.0のみ実データあり
-    image_url:    Optional[str] # entry.enclosures または entry.media_thumbnail
+    image_url:    Optional[str] # entry.media_thumbnail または entry.enclosures
     category:     str
     fetched_at:   str
 ```
@@ -127,7 +133,14 @@ class NewsRssEntry:
 def _parse_published_at(entry) -> Optional[str]:
     # entry.published_parsed (RSS 2.0 pubDate)
     # entry.updated_parsed   (RDF 1.0 dc:date のfallback)
-    # どちらもtime.struct → JST変換（date_utils流用）
+    # どちらもtime.struct → JST変換（クローラー内でインライン実装）
+```
+
+**URL取得（フォーマット差を吸収）:**
+```python
+def _extract_url(entry) -> str:
+    # entry.link を優先し、なければ entry.id (rdf:about) を使用
+    return entry.get("link") or entry.get("id", "")
 ```
 
 **重複排除:** `article_id = SHA256(source_url)[:16]` をPRIMARY KEYとし `INSERT OR IGNORE`
@@ -148,7 +161,7 @@ def _parse_published_at(entry) -> Optional[str]:
 [毎時] run_google_news.py
 
   # キーワード管理（随時実行）
-  --add-keyword <kw>      google_news_keywords にINSERT
+  --add-keyword <kw>      google_news_keywords にINSERT（無効化済みの場合は再アクティブ化）
   --disable-keyword <kw>  is_active = 0 に更新
 
   # 定期実行
@@ -156,15 +169,15 @@ def _parse_published_at(entry) -> Optional[str]:
   STEP 2: DB初期化
   STEP 3: active なキーワード一覧取得
   STEP 4: キーワードごとにループ
-    4-1: RSS取得 (fetch_by_keyword)
+    4-1: RSS取得 (fetch_by_keyword) ※記事ごとにリダイレクト解決 + 0.3秒ウェイト
     4-2: DB保存 (INSERT OR IGNORE)
     4-3: google_news_fetch_log へ記録
     4-4: キーワード間ウェイト（3秒）
 
 引数:
   --force                 夜間スキップ無効
-  --keyword <kw>          特定キーワードのみ実行
-  --add-keyword <kw>      キーワード追加
+  --keyword <kw>          特定キーワードのみ実行（DB未登録でも一時実行可能）
+  --add-keyword <kw>      キーワード追加（既存かつ無効化済みの場合は再アクティブ化）
   --disable-keyword <kw>  キーワード無効化
 ```
 
@@ -178,7 +191,7 @@ src/signals/google_news/
 ├── crawlers/
 │   └── rss_crawler.py      # GoogleNewsEntry dataclass + fetch_by_keyword()
 └── loaders/
-    └── db_loader.py        # load_entries() + keyword管理関数
+    └── db_loader.py        # insert_articles() + keyword管理関数
 
 scripts/
 └── run_google_news.py
@@ -193,7 +206,7 @@ logs/google_news/           # (実行時自動生成)
 CREATE TABLE IF NOT EXISTS google_news_keywords (
     keyword_id  INTEGER PRIMARY KEY AUTOINCREMENT,
     keyword     TEXT NOT NULL UNIQUE,
-    is_active   INTEGER DEFAULT 1,      -- 0: 無効化
+    is_active   INTEGER NOT NULL DEFAULT 1,      -- 0: 無効化
     created_at  TEXT NOT NULL,
     updated_at  TEXT NOT NULL
 );
@@ -205,7 +218,7 @@ CREATE TABLE IF NOT EXISTS google_news_articles (
     title         TEXT NOT NULL,
     source_name   TEXT,               -- entry.source['title']（「NHK」「読売新聞」等）
     link          TEXT NOT NULL,      -- 元記事URL（Googleリダイレクト解決済み）
-    published_at  TEXT,               -- JST ISO8601
+    published_at  TEXT,               -- JST "YYYY-MM-DD HH:MM:SS"
     summary       TEXT,
     fetched_at    TEXT NOT NULL,
     FOREIGN KEY (keyword_id) REFERENCES google_news_keywords (keyword_id)
@@ -215,10 +228,16 @@ CREATE TABLE IF NOT EXISTS google_news_fetch_log (
     fetch_id      INTEGER PRIMARY KEY AUTOINCREMENT,
     keyword       TEXT NOT NULL,
     fetched_at    TEXT NOT NULL,
-    article_count INTEGER DEFAULT 0,
-    new_count     INTEGER DEFAULT 0,
+    article_count INTEGER NOT NULL DEFAULT 0,
+    new_count     INTEGER NOT NULL DEFAULT 0,
     error         TEXT
 );
+
+-- インデックス
+CREATE INDEX IF NOT EXISTS idx_gnews_keyword   ON google_news_articles (keyword);
+CREATE INDEX IF NOT EXISTS idx_gnews_published ON google_news_articles (published_at);
+CREATE INDEX IF NOT EXISTS idx_gnews_source    ON google_news_articles (source_name);
+CREATE INDEX IF NOT EXISTS idx_gnews_log       ON google_news_fetch_log (keyword, fetched_at);
 ```
 
 ### Google News RSSフィールド
@@ -232,7 +251,7 @@ class GoogleNewsEntry:
     title:        str
     source_name:  Optional[str] # entry.source.get('title') — 配信元メディア名
     link:         str           # 元記事URL（Googleリダイレクト解決済み）
-    published_at: Optional[str]
+    published_at: Optional[str] # JST "YYYY-MM-DD HH:MM:SS"
     summary:      Optional[str]
     fetched_at:   str
 ```
@@ -242,12 +261,12 @@ class GoogleNewsEntry:
 Google News RSSが提供する `<link>` は、元記事のURLではなく `https://news.google.com/rss/articles/...` という暗号化されたリダイレクトURLになっています。
 これをそのまま使用すると、Google側でURLパラメータが変わった際に**同一記事が重複登録される**問題が生じます。
 
-**対策方針:**
-1. RSSから取得したリダイレクトURLをデコード（またはHEADリクエストでリダイレクト先を取得）し、**実際のメディアの元記事URL**（例: `https://news.yahoo.co.jp/...`）を抽出します。
-2. 抽出した元記事URLを `GoogleNewsEntry.link` として保存します。
-3. `article_id` の生成（SHA256）にも、この「解決済みの元記事URL」を使用し、確実な重複排除を実現します。
-
-※URL解決には、`requests.head(url, allow_redirects=True)` によるリダイレクト追跡、あるいは専用のデコードロジック（例: サードパーティのURLデコードライブラリ）を活用します。リダイレクト追跡を行う場合は、通信遅延を考慮して適切なタイムアウトを設定してください。
+**実装済み対策:**
+1. `requests.head(url, allow_redirects=True, timeout=10)` でリダイレクト先を追跡し、元記事URLを取得。
+2. 解決先がまだ `google.com` ドメインの場合は元のURLをそのまま使用（フォールバック）。
+3. 通信失敗時も元のURLにフォールバック（エラーで記事をスキップしない）。
+4. 解決済みURLを `GoogleNewsEntry.link` として保存し、`article_id` の SHA256 生成にも使用。
+5. リダイレクト解決のHTTPリクエスト負荷を分散するため、記事ごとに **0.3秒のウェイト** を挿入。
 
 ---
 
@@ -299,10 +318,11 @@ google_news:
 
 | ユーティリティ | パス | 用途 |
 |---------------|------|------|
-| `get_jst_now()` | `src/common/date_utils.py` | 現在時刻JST |
-| `get_connection()` | `src/common/db_utils.py` | WAL/PRAGMA済みDB接続 |
-| `setup_logger()` | `src/common/logging_setup.py` | 日付別ログ |
+| `open_connection()` | `src/common/db_utils.py` | WAL/PRAGMA済みDB接続 |
+| `setup_logging()` | `src/common/logging_setup.py` | 日付別ログ |
 | config loader | `src/config.py` | YAML設定読み込み |
+
+※ JST変換は各クローラー内でインラインで実装（`date_utils` は不使用）。
 
 ---
 
