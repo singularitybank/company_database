@@ -18,6 +18,9 @@
   # クロールをスキップしてParquet変換のみ
   python scripts/run_hellowork.py --date 2026-04-10 --skip-crawl
 
+  # 求人番号収集(STEP1)をスキップして詳細HTMLダウンロードから開始
+  python scripts/run_hellowork.py --date 2026-04-10 --skip-step1
+
 [タスクスケジューラ]
   scripts/run_hellowork.bat から呼び出す
 """
@@ -27,6 +30,8 @@ import logging
 import sys
 import time
 from pathlib import Path
+
+import pandas as pd
 
 # プロジェクトルートを sys.path に追加（src 配下のモジュールを import できるようにする）
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -63,6 +68,11 @@ def main() -> int:
         action="store_true",
         help="クロールをスキップし、既存HTMLのParquet変換のみ実行する",
     )
+    parser.add_argument(
+        "--skip-step1",
+        action="store_true",
+        help="求人番号収集(STEP1)をスキップし、保存済みCSVから詳細HTMLダウンロードを開始する",
+    )
     args = parser.parse_args()
 
     date_str = args.date.strftime("%Y%m%d")
@@ -80,8 +90,28 @@ def main() -> int:
     # ── STEP 1 & 2: クロール ─────────────────────────────────────────────────
     if args.skip_crawl:
         logger.info("[STEP 1-2] --skip-crawl 指定のためクロールをスキップ")
+    elif args.skip_step1:
+        logger.info("[STEP 1] --skip-step1 指定のため求人番号収集をスキップ")
+        jobnumbers_csv = Path(_cfg["output_dir"]) / f"jobnumbers_{date_str}.csv"
+        if not jobnumbers_csv.exists():
+            logger.error("[STEP 1] 求人番号CSVが見つかりません: %s", jobnumbers_csv)
+            return 1
+        df = pd.read_csv(jobnumbers_csv)
+        logger.info("[STEP 1] 求人番号CSV読み込み完了: %d件 (%s)", len(df), jobnumbers_csv.name)
+
+        logger.info("[STEP 2/4] 詳細HTMLダウンロード 開始")
+        step_start = time.time()
+        try:
+            scrape_details(df, args.date)
+        except Exception:
+            logger.exception("[STEP 2] 詳細HTMLダウンロード中に予期しないエラーが発生しました")
+            return 1
+        logger.info(
+            "[STEP 2/4] 詳細HTMLダウンロード完了 (%.1f分)",
+            (time.time() - step_start) / 60,
+        )
     else:
-        logger.info("[STEP 1/3] 求人番号収集 開始")
+        logger.info("[STEP 1/4] 求人番号収集 開始")
         driver = None
         try:
             driver = build_driver(headless=args.headless)
@@ -89,7 +119,7 @@ def main() -> int:
             step_start = time.time()
             df = crawl(driver, args.date)
             logger.info(
-                "[STEP 1/3] 求人番号収集完了: %d件 (%.1f分)",
+                "[STEP 1/4] 求人番号収集完了: %d件 (%.1f分)",
                 len(df), (time.time() - step_start) / 60,
             )
 
@@ -101,7 +131,7 @@ def main() -> int:
                 driver.quit()
                 logger.info("ブラウザ終了")
 
-        logger.info("[STEP 2/3] 詳細HTMLダウンロード 開始")
+        logger.info("[STEP 2/4] 詳細HTMLダウンロード 開始")
         step_start = time.time()
         try:
             scrape_details(df, args.date)
@@ -109,7 +139,7 @@ def main() -> int:
             logger.exception("[STEP 2] 詳細HTMLダウンロード中に予期しないエラーが発生しました")
             return 1
         logger.info(
-            "[STEP 2/3] 詳細HTMLダウンロード完了 (%.1f分)",
+            "[STEP 2/4] 詳細HTMLダウンロード完了 (%.1f分)",
             (time.time() - step_start) / 60,
         )
 
